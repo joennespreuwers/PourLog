@@ -149,7 +149,7 @@ export function useSupabaseData(user) {
     if (rosteriesRef.current.some(r => r.id === id)) return  // dedup (clone/import)
     const item = { ...data, id, user_id: userRef.current?.id, created_at: data.created_at ?? now() }
     setRoasteries(prev => [...prev, item])
-    if (userRef.current)
+    if (userRef.current && !data.imported)
       supabase.from('roasteries').insert(clean(item)).then(({ error }) => {
         if (error) setRoasteries(prev => prev.filter(r => r.id !== item.id))
       })
@@ -169,7 +169,7 @@ export function useSupabaseData(user) {
     if (beansRef.current.some(b => b.id === id)) return  // dedup (clone/import)
     const item = { ...data, id, user_id: userRef.current?.id, created_at: data.created_at ?? now() }
     setBeans(prev => [...prev, item])
-    if (userRef.current)
+    if (userRef.current && !data.imported)
       supabase.from('beans').insert(clean(item)).then(({ error }) => {
         if (error) setBeans(prev => prev.filter(b => b.id !== item.id))
       })

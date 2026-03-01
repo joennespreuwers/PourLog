@@ -164,6 +164,7 @@ export default function Layout({ activeTab, onTabChange, onBack, user, syncStatu
           backgroundColor: 'color-mix(in srgb, var(--color-paper) 97%, transparent)',
           borderColor: 'var(--color-border)',
           backdropFilter: 'blur(8px)',
+          paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
         }}
       >
         {TABS.map(tab => {

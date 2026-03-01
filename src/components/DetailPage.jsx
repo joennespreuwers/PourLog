@@ -63,7 +63,7 @@ export default function DetailPage({ open, onClose, title, children, footer, ful
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
           <div className="mx-auto w-full max-w-2xl px-5 py-6">
             {children}
           </div>
@@ -138,7 +138,7 @@ export default function DetailPage({ open, onClose, title, children, footer, ful
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="flex-1 overflow-y-auto px-5 py-5" style={{ overscrollBehavior: 'contain' }}>
             {displayChildren}
           </div>
 

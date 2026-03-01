@@ -211,7 +211,7 @@ function EquipmentCard({ item, onEdit, onDelete }) {
       {item.color && (
         <div className="absolute top-0 left-0 right-0 h-1 rounded-t-xl" style={{ backgroundColor: item.color.bg, borderBottom: `1px solid ${item.color.text}22` }} />
       )}
-      <div className="absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
+      <div className="card-actions absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
         <ActionBtn onClick={onEdit} label="Edit"><Pencil size={13} /></ActionBtn>
         <ActionBtn onClick={onDelete} label="Delete" danger><Trash2 size={13} /></ActionBtn>
       </div>

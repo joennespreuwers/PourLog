@@ -185,7 +185,7 @@ function RoasteryCard({ roastery: r, onView, onEdit, onDelete, onFavorite, onClo
         </div>
       )}
       <div className="p-5 flex flex-col gap-3">
-      <div className="absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
+      <div className="card-actions absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
         {r.imported ? (
           <>
             <ActionBtn onClick={onClone} label="Clone"><Copy size={13} /></ActionBtn>
@@ -198,7 +198,7 @@ function RoasteryCard({ roastery: r, onView, onEdit, onDelete, onFavorite, onClo
           </>
         )}
       </div>
-      <button onClick={e => { e.stopPropagation(); onFavorite() }} className="absolute bottom-3 right-3 cursor-pointer" title={r.is_favorite ? 'Unfavourite' : 'Favourite'} style={{ background: 'none', border: 'none', padding: 0, opacity: r.is_favorite || hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
+      <button onClick={e => { e.stopPropagation(); onFavorite() }} className="absolute bottom-2 right-2 cursor-pointer" title={r.is_favorite ? 'Unfavourite' : 'Favourite'} style={{ background: 'none', border: 'none', padding: 8, opacity: r.is_favorite || hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
         <Heart size={14} fill={r.is_favorite ? 'currentColor' : 'none'} style={{ color: r.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
       </button>
 
@@ -280,7 +280,7 @@ function ActionBtn({ onClick, label, danger, children }) {
     <button
       type="button"
       onClick={e => { e.stopPropagation(); onClick() }}
-      className="w-7 h-7 flex items-center justify-center rounded text-xs cursor-pointer"
+      className="w-10 h-10 flex items-center justify-center rounded text-xs cursor-pointer"
       style={{ border: '1px solid var(--color-border)', backgroundColor: hov ? (danger ? '#fee2e2' : 'var(--color-cream)') : '#fff', color: hov && danger ? '#991b1b' : 'var(--color-stone)', transition: 'all 0.1s' }}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       aria-label={label}

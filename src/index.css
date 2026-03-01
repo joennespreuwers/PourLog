@@ -26,3 +26,22 @@ body {
 h1, h2, h3 {
   font-family: var(--font-serif);
 }
+
+/* Fix 6: Eliminate 300ms tap delay and double-tap zoom on interactive elements */
+button, a {
+  touch-action: manipulation;
+}
+
+/* Fix 2: Prevent iOS Safari viewport zoom on form field focus (triggers when font-size < 16px) */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Fix 1: Card action buttons are hover-only — always show them on touch devices */
+@media (hover: none) {
+  .card-actions {
+    opacity: 1 !important;
+  }
+}

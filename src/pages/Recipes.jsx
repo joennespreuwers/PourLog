@@ -360,7 +360,7 @@ function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, 
       onClick={onView}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     >
-      <div className="absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
+      <div className="card-actions absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
         {r.imported ? (
           <ActionBtn onClick={onClone} label="Clone"><Copy size={13} /></ActionBtn>
         ) : (
@@ -371,7 +371,7 @@ function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, 
         )}
         <ActionBtn onClick={onDelete} label={r.imported ? 'Remove' : 'Delete'} danger><Trash2 size={13} /></ActionBtn>
       </div>
-      <button onClick={e => { e.stopPropagation(); onFavorite() }} className="absolute bottom-3 right-3 cursor-pointer" title={r.is_favorite ? 'Unfavourite' : 'Favourite'} style={{ background: 'none', border: 'none', padding: 0, opacity: r.is_favorite || hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
+      <button onClick={e => { e.stopPropagation(); onFavorite() }} className="absolute bottom-2 right-2 cursor-pointer" title={r.is_favorite ? 'Unfavourite' : 'Favourite'} style={{ background: 'none', border: 'none', padding: 8, opacity: r.is_favorite || hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
         <Heart size={14} fill={r.is_favorite ? 'currentColor' : 'none'} style={{ color: r.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
       </button>
 

@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 
-export default function AuthModal({ onSignIn, onSignUp, onClose, required = false }) {
-  const [mode, setMode]       = useState('signin') // 'signin' | 'signup'
+export default function AuthModal({ onSignIn, onSignUp, onResetPassword, onClose, required = false }) {
+  const [mode, setMode]       = useState('signin') // 'signin' | 'signup' | 'reset'
   const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]     = useState(null)
   const [loading, setLoading] = useState(false)
   const [done, setDone]       = useState(false) // signup confirmation
+  const [resetDone, setResetDone] = useState(false) // password reset email sent
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -17,9 +18,12 @@ export default function AuthModal({ onSignIn, onSignUp, onClose, required = fals
       if (mode === 'signin') {
         await onSignIn(email, password)
         onClose()
-      } else {
+      } else if (mode === 'signup') {
         await onSignUp(email, password)
         setDone(true)
+      } else {
+        await onResetPassword(email)
+        setResetDone(true)
       }
     } catch (err) {
       setError(err.message ?? 'Something went wrong')
@@ -68,14 +72,29 @@ export default function AuthModal({ onSignIn, onSignUp, onClose, required = fals
               Back to sign in
             </button>
           </div>
+        ) : resetDone ? (
+          // ── Reset email sent ─────────────────────────────────────────────
+          <div className="text-center py-4">
+            <p className="font-serif text-xl font-medium mb-2" style={{ color: 'var(--color-espresso)' }}>Check your inbox</p>
+            <p className="text-sm" style={{ color: 'var(--color-stone)' }}>
+              We sent a password reset link to <strong>{email}</strong>. Click it and you'll be taken straight to the change-password form.
+            </p>
+            <button
+              className="mt-5 text-sm font-medium cursor-pointer"
+              style={{ color: 'var(--color-roast)' }}
+              onClick={() => { setMode('signin'); setResetDone(false) }}
+            >
+              Back to sign in
+            </button>
+          </div>
         ) : (
           <>
             {/* ── Header ──────────────────────────────────────────────── */}
             <p className="font-serif text-xl font-medium mb-1" style={{ color: 'var(--color-espresso)' }}>
-              {mode === 'signin' ? 'Sign in' : 'Create account'}
+              {mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Reset password'}
             </p>
             <p className="text-sm mb-6" style={{ color: 'var(--color-stone)' }}>
-              {required && mode === 'signin' ? 'Sign in to access your journal.' : mode === 'signin' ? 'Welcome back to PourLog.' : 'Start your coffee journal.'}
+              {mode === 'reset' ? 'Enter your email and we\'ll send a reset link.' : required && mode === 'signin' ? 'Sign in to access your journal.' : mode === 'signin' ? 'Welcome back to PourLog.' : 'Start your coffee journal.'}
             </p>
 
             {/* ── Form ────────────────────────────────────────────────── */}
@@ -98,8 +117,14 @@ export default function AuthModal({ onSignIn, onSignUp, onClose, required = fals
                   onBlur={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
                 />
               </div>
+              {mode !== 'reset' && (
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--color-stone)' }}>Password</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium" style={{ color: 'var(--color-stone)' }}>Password</label>
+                  {mode === 'signin' && (
+                    <button type="button" className="text-xs cursor-pointer" style={{ color: 'var(--color-roast)' }} onClick={() => { setMode('reset'); setError(null) }}>Forgot password?</button>
+                  )}
+                </div>
                 <input
                   type="password"
                   required
@@ -117,6 +142,7 @@ export default function AuthModal({ onSignIn, onSignUp, onClose, required = fals
                   onBlur={e => e.currentTarget.style.borderColor = 'var(--color-border)'}
                 />
               </div>
+              )}
 
               {error && (
                 <p className="text-xs px-3 py-2 rounded-md" style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
@@ -130,20 +156,23 @@ export default function AuthModal({ onSignIn, onSignUp, onClose, required = fals
                 className="w-full py-2 rounded-md text-sm font-medium cursor-pointer mt-1 disabled:opacity-60"
                 style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}
               >
-                {loading ? '…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+                {loading ? '…' : mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link'}
               </button>
             </form>
 
             {/* ── Toggle ──────────────────────────────────────────────── */}
             <p className="text-xs text-center mt-4" style={{ color: 'var(--color-stone)' }}>
-              {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+              {mode === 'reset' ? '' : mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
               <button
                 className="font-medium cursor-pointer"
                 style={{ color: 'var(--color-roast)' }}
                 onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError(null) }}
               >
-                {mode === 'signin' ? 'Sign up' : 'Sign in'}
+                {mode === 'signin' ? 'Sign up' : mode === 'signup' ? 'Sign in' : ''}
               </button>
+              {mode === 'reset' && (
+                <button className="font-medium cursor-pointer" style={{ color: 'var(--color-roast)' }} onClick={() => { setMode('signin'); setError(null) }}>Back to sign in</button>
+              )}
             </p>
           </>
         )}

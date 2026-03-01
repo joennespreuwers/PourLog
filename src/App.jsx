@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate, useSearchParams, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import Roasteries from './pages/Roasteries'
 import Beans from './pages/Beans'
@@ -20,9 +20,19 @@ import { supabase } from './lib/supabase'
 
 export default function App() {
   // ── Auth ───────────────────────────────────────────────────────────────────
-  const { user, loading: authLoading, signIn, signUp, signOut, updateProfile, updatePassword } = useAuth()
+  const { user, loading: authLoading, authEvent, signIn, signUp, signOut, resetPassword, updateProfile, updatePassword } = useAuth()
   const [authOpen, setAuthOpen]       = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const navigate = useNavigate()
+
+  // PASSWORD_RECOVERY: user followed a reset email link — send them straight to the change-password form
+  useEffect(() => {
+    if (authEvent === 'PASSWORD_RECOVERY') {
+      navigate('/app', { replace: true })
+      setAccountOpen(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authEvent])
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   const TABS = ['Roasteries', 'Beans', 'Recipes', 'Equipment']
@@ -96,7 +106,7 @@ export default function App() {
         recipes={recipes} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe}
         equipment={equipment} addEquipment={addEquipment} updateEquipment={updateEquipment} deleteEquipment={deleteEquipment}
         syncStatus={syncStatus}
-        signIn={signIn} signUp={signUp} signOut={signOut}
+        signIn={signIn} signUp={signUp} signOut={signOut} resetPassword={resetPassword}
         updateProfile={updateProfile} updatePassword={updatePassword}
         handleExport={handleExport} handleImport={handleImport}
       />} />
@@ -112,7 +122,7 @@ function MainApp({
   beans, addBean, updateBean, deleteBean,
   recipes, addRecipe, updateRecipe, deleteRecipe,
   equipment, addEquipment, updateEquipment, deleteEquipment,
-  syncStatus, signIn, signUp, signOut, updateProfile, updatePassword,
+  syncStatus, signIn, signUp, signOut, resetPassword, updateProfile, updatePassword,
   handleExport, handleImport,
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -214,6 +224,7 @@ function MainApp({
         <AuthModal
           onSignIn={signIn}
           onSignUp={signUp}
+          onResetPassword={resetPassword}
           onClose={() => setAuthOpen(false)}
         />
       )}

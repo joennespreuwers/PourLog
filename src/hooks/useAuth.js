@@ -12,6 +12,7 @@ async function upsertProfile(user) {
 export function useAuth() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [authEvent, setAuthEvent] = useState(null)
 
   useEffect(() => {
     // Get current session
@@ -22,7 +23,8 @@ export function useAuth() {
     })
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAuthEvent(event)
       setUser(session?.user ?? null)
       if (session?.user) upsertProfile(session.user)
     })
@@ -44,6 +46,13 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
+  async function resetPassword(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/app`,
+    })
+    if (error) throw error
+  }
+
   async function updateProfile(displayName) {
     const { error } = await supabase.auth.updateUser({ data: { display_name: displayName } })
     if (error) throw error
@@ -53,9 +62,17 @@ export function useAuth() {
   }
 
   async function updatePassword(newPassword) {
+    // Ensure we have a live session — refresh if needed (handles expired/missing sessions)
+    let { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession()
+      if (refreshErr || !refreshed.session) {
+        throw new Error('Your session has expired. Please sign in again before changing your password.')
+      }
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     if (error) throw error
   }
 
-  return { user, loading, signIn, signUp, signOut, updateProfile, updatePassword }
+  return { user, loading, authEvent, signIn, signUp, signOut, resetPassword, updateProfile, updatePassword }
 }

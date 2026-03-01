@@ -122,7 +122,7 @@ export function useSupabaseData(user) {
             if (!data?.length) return
             const fresh = data.map(row => {
               const local = importedR.find(r => r.id === row.id)
-              return { ...row, imported: true, rating: local?.rating, notes: local?.notes }
+              return { ...row, imported: true, rating: local?.rating, notes: local?.notes, is_favorite: local?.is_favorite ?? false }
             })
             setRoasteries(prev => [...prev.filter(r => !r.imported), ...fresh])
           })
@@ -135,7 +135,7 @@ export function useSupabaseData(user) {
             if (!data?.length) return
             const fresh = data.map(row => {
               const local = importedB.find(b => b.id === row.id)
-              return { ...row, imported: true, rating: local?.rating, notes: local?.notes }
+              return { ...row, imported: true, rating: local?.rating, notes: local?.notes, is_favorite: local?.is_favorite ?? false }
             })
             setBeans(prev => [...prev.filter(b => !b.imported), ...fresh])
           })

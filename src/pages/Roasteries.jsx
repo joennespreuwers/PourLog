@@ -16,6 +16,7 @@ export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [cloningImportedId, setCloningImportedId] = useState(null)
   const [detailId, setDetailId] = useState(null)
   const detailItem = detailId ? (roasteries.find(r => r.id === detailId) ?? null) : null
   const [shareId, setShareId] = useState(null)
@@ -38,12 +39,18 @@ export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
   }
   function openClone(r) {
     setEditing(null)
+    setCloningImportedId(r.imported ? r.id : null)
     setForm({ name: r.name ?? '', country: r.country ?? '', city: r.city ?? '', website: r.website ?? '', description: r.description ?? '', rating: r.rating ?? null, notes: r.notes ?? '', photo_url: r.photo_url ?? null })
     setDrawerOpen(true)
   }
   function handleSubmit(e) {
     e.preventDefault()
-    editing ? onUpdate(editing.id, form) : onAdd(form)
+    if (editing) {
+      onUpdate(editing.id, form)
+    } else {
+      onAdd(form)
+      if (cloningImportedId) { onDelete(cloningImportedId); setCloningImportedId(null) }
+    }
     setDrawerOpen(false)
   }
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }))

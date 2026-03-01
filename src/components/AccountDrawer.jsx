@@ -56,7 +56,7 @@ export default function AccountDrawer({ open, onClose, user, onUpdateProfile, on
     if (v === currentSlug.current) { setSlugStatus('available'); return }
     setSlugStatus('checking')
     slugDebounce.current = setTimeout(async () => {
-      const { data } = await supabase.from('profiles').select('id').eq('slug', v).maybeSingle()
+      const { data } = await supabase.from('profiles').select('id').eq('slug', v).neq('id', user.id).maybeSingle()
       setSlugStatus(data ? 'taken' : 'available')
     }, 400)
   }
@@ -69,9 +69,9 @@ export default function AccountDrawer({ open, onClose, user, onUpdateProfile, on
     setProfileMsg(null)
     try {
       await onUpdateProfile(displayName.trim())
-      // Save slug to profiles table
+      // Save slug + display_name to profiles table (display_name used by ProfilePage)
       const newSlug = slug.trim() || null
-      await supabase.from('profiles').upsert({ id: user.id, slug: newSlug }, { onConflict: 'id' })
+      await supabase.from('profiles').upsert({ id: user.id, slug: newSlug, display_name: displayName.trim() || null }, { onConflict: 'id' })
       currentSlug.current = newSlug ?? ''
       setProfileMsg({ ok: true, text: 'Saved.' })
     } catch (err) {

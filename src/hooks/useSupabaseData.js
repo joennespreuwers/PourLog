@@ -109,28 +109,61 @@ export function useSupabaseData(user) {
       const eqData = eq.error ? [] : (eq.data ?? [])
 
       const supabaseIsEmpty = r.data.length === 0 && b.data.length === 0 && rec.data.length === 0
-      const localHasData    = rosteriesRef.current.length > 0 || beansRef.current.length > 0 || recipesRef.current.length > 0
+      // Exclude imported items from migration check — they can't be inserted (PK belongs to owner)
+      const ownRoasteries = rosteriesRef.current.filter(r => !r.imported)
+      const ownBeans      = beansRef.current.filter(b => !b.imported)
+      const localHasData  = ownRoasteries.length > 0 || ownBeans.length > 0 || recipesRef.current.length > 0
 
       if (supabaseIsEmpty && userRef.current && localHasData) {
         // ── First-time migration: push localStorage data to Supabase ──
         const withUid = item => ({ ...item, user_id: uid })
         const inserts = []
-        if (rosteriesRef.current.length) inserts.push(supabase.from('roasteries').insert(rosteriesRef.current.map(r => clean(withUid(r)))))
-        if (beansRef.current.length)     inserts.push(supabase.from('beans').insert(beansRef.current.map(b => clean(withUid(b)))))
-        if (recipesRef.current.length)   inserts.push(supabase.from('recipes').insert(recipesRef.current.map(r => cleanRecipe(withUid(r)))))
+        if (ownRoasteries.length) inserts.push(supabase.from('roasteries').insert(ownRoasteries.map(r => clean(withUid(r)))))
+        if (ownBeans.length)      inserts.push(supabase.from('beans').insert(ownBeans.map(b => clean(withUid(b)))))
+        if (recipesRef.current.length) inserts.push(supabase.from('recipes').insert(recipesRef.current.map(r => cleanRecipe(withUid(r)))))
         const userEq = equipmentRef.current.filter(e => !e.id?.startsWith('default-'))
-        if (userEq.length)               inserts.push(supabase.from('equipment').insert(userEq.map(e => clean(withUid(e)))))
+        if (userEq.length)        inserts.push(supabase.from('equipment').insert(userEq.map(e => clean(withUid(e)))))
         await Promise.all(inserts)
         setSyncStatus('synced')
       } else if (!supabaseIsEmpty) {
         // ── Normal: Supabase is source of truth ──
-        // Preserve local-only fields that are never stored in Supabase
         const LOCAL_RECIPE_EXTRAS = ['brewer_id', 'filter_id', 'grinder_id', 'time_m', 'time_s']
         const mergedRoasteries = mergeExtras(r.data,   rosteriesRef.current, ['imported'])
         const mergedBeans      = mergeExtras(b.data,   beansRef.current,     ['imported'])
         const mergedRecipes    = mergeExtras(rec.data, recipesRef.current,   LOCAL_RECIPE_EXTRAS)
-        setRoasteries(mergedRoasteries)
-        setBeans(mergedBeans)
+
+        // Refresh imported items: re-fetch originals from Supabase so owner edits stay live
+        const importedRoasteries = rosteriesRef.current.filter(r => r.imported)
+        const importedBeans      = beansRef.current.filter(b => b.imported)
+        let freshImportedR = importedRoasteries
+        let freshImportedB = importedBeans
+        const fetchImported = []
+        if (importedRoasteries.length) {
+          fetchImported.push(
+            supabase.from('roasteries').select('*').in('id', importedRoasteries.map(r => r.id))
+              .then(({ data }) => {
+                if (data?.length) freshImportedR = data.map(fresh => {
+                  const local = importedRoasteries.find(r => r.id === fresh.id)
+                  return { ...fresh, imported: true, rating: local?.rating, notes: local?.notes }
+                })
+              })
+          )
+        }
+        if (importedBeans.length) {
+          fetchImported.push(
+            supabase.from('beans').select('*').in('id', importedBeans.map(b => b.id))
+              .then(({ data }) => {
+                if (data?.length) freshImportedB = data.map(fresh => {
+                  const local = importedBeans.find(b => b.id === fresh.id)
+                  return { ...fresh, imported: true, rating: local?.rating, notes: local?.notes }
+                })
+              })
+          )
+        }
+        if (fetchImported.length) await Promise.all(fetchImported)
+
+        setRoasteries([...mergedRoasteries, ...freshImportedR])
+        setBeans([...mergedBeans, ...freshImportedB])
         setRecipes(mergedRecipes)
         // Equipment: if Supabase has rows use them; otherwise push local to Supabase
         if (eqData.length > 0) {
@@ -146,7 +179,7 @@ export function useSupabaseData(user) {
         }
         setSyncStatus('synced')
       } else {
-        // Supabase empty + not authed — keep local data as-is
+        // Supabase empty + no own local data — keep localStorage as-is
         setSyncStatus('synced')
       }
     } catch {

@@ -64,6 +64,7 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [cloningImportedId, setCloningImportedId] = useState(null)
   const [detailId, setDetailId] = useState(null)
   const detailItem = detailId ? (beans.find(b => b.id === detailId) ?? null) : null
   const [shareId, setShareId] = useState(null)
@@ -98,6 +99,7 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
   }
   function openClone(b) {
     setEditing(null)
+    setCloningImportedId(b.imported ? b.id : null)
     setForm({
       name: b.name ?? '', roastery_id: b.roastery_id ?? '', origin_country: b.origin_country ?? '',
       origin_region: b.origin_region ?? '', farm: b.farm ?? '', variety: b.variety ?? '',
@@ -121,6 +123,7 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
       flavor_notes:    (form.flavor_notes ?? []).map(n => (typeof n === 'object' && n?.label) ? n.label : String(n)),
     }
     editing ? onUpdate(editing.id, data) : onAdd(data)
+    if (!editing && cloningImportedId) { onDelete(cloningImportedId); setCloningImportedId(null) }
     setDrawerOpen(false)
   }
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }))

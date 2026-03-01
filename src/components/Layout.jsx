@@ -9,7 +9,7 @@ const SYNC_DOT = {
   local:    { color: 'var(--color-stone)',   title: 'Local only' },
   disabled: { color: '#f59e0b',              title: 'Sync disabled' },
   syncing:  { color: '#3b82f6',              title: 'Syncing…' },
-  synced:   { color: '#22c55e',              title: 'Synced' },
+  synced:   { color: '#a3e635',              title: 'Synced' },
   error:    { color: '#ef4444',              title: 'Sync error' },
 }
 

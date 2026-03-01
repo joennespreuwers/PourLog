@@ -53,9 +53,9 @@ export default function ProfilePage() {
       }
 
       const [rRes, bRes, recRes] = await Promise.all([
-        supabase.from('roasteries').select('*').order('created_at', { ascending: false }),
-        supabase.from('beans').select('*').order('created_at', { ascending: false }),
-        supabase.from('recipes').select('*').order('created_at', { ascending: false }),
+        supabase.from('roasteries').select('*').eq('user_id', profileData.id).order('created_at', { ascending: false }),
+        supabase.from('beans').select('*').eq('user_id', profileData.id).order('created_at', { ascending: false }),
+        supabase.from('recipes').select('*').eq('user_id', profileData.id).order('created_at', { ascending: false }),
       ])
 
       setProfile(profileData)

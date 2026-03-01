@@ -90,7 +90,44 @@ export function useSupabaseData(user) {
   useEffect(() => { syncEnabledRef.current = syncEnabled }, [syncEnabled])
 
   // ── Pull all data from Supabase ────────────────────────────────────────────
+  // Refresh imported items from Supabase (public read — works without auth)
+  const refreshImported = useCallback(async () => {
+    const importedRoasteries = rosteriesRef.current.filter(r => r.imported)
+    const importedBeans      = beansRef.current.filter(b => b.imported)
+    if (!importedRoasteries.length && !importedBeans.length) return
+    const fetches = []
+    if (importedRoasteries.length) {
+      fetches.push(
+        supabase.from('roasteries').select('*').in('id', importedRoasteries.map(r => r.id))
+          .then(({ data }) => {
+            if (!data?.length) return
+            const fresh = data.map(row => {
+              const local = importedRoasteries.find(r => r.id === row.id)
+              return { ...row, imported: true, rating: local?.rating, notes: local?.notes }
+            })
+            setRoasteries(prev => [...prev.filter(r => !r.imported), ...fresh])
+          })
+      )
+    }
+    if (importedBeans.length) {
+      fetches.push(
+        supabase.from('beans').select('*').in('id', importedBeans.map(b => b.id))
+          .then(({ data }) => {
+            if (!data?.length) return
+            const fresh = data.map(row => {
+              const local = importedBeans.find(b => b.id === row.id)
+              return { ...row, imported: true, rating: local?.rating, notes: local?.notes }
+            })
+            setBeans(prev => [...prev.filter(b => !b.imported), ...fresh])
+          })
+      )
+    }
+    await Promise.all(fetches)
+  }, [setRoasteries, setBeans])
+
   const pullAll = useCallback(async () => {
+    // Always refresh imported items — they're public reads and the owner may have changed them
+    await refreshImported()
     if (!syncEnabledRef.current) { setSyncStatus('disabled'); return }
     if (!userRef.current) { setSyncStatus('local'); return } // not signed in — localStorage only
     setSyncStatus('syncing')

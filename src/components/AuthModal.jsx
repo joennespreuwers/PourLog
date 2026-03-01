@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 
-export default function AuthModal({ onSignIn, onSignUp, onClose }) {
+export default function AuthModal({ onSignIn, onSignUp, onClose, required = false }) {
   const [mode, setMode]       = useState('signin') // 'signin' | 'signup'
   const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
@@ -33,23 +33,25 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(30,17,8,0.45)', backdropFilter: 'blur(4px)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => { if (!required && e.target === e.currentTarget) onClose() }}
     >
       <div
         className="w-full max-w-sm rounded-2xl p-7 relative"
         style={{ backgroundColor: 'var(--color-paper)', border: '1px solid var(--color-border)' }}
       >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-md cursor-pointer"
-          style={{ color: 'var(--color-stone)' }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-cream)'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-          aria-label="Close"
-        >
-          <X size={15} />
-        </button>
+        {/* Close — hidden when required */}
+        {!required && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-md cursor-pointer"
+            style={{ color: 'var(--color-stone)' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-cream)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            aria-label="Close"
+          >
+            <X size={15} />
+          </button>
+        )}
 
         {done ? (
           // ── Signup confirmation ──────────────────────────────────────────
@@ -73,7 +75,7 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }) {
               {mode === 'signin' ? 'Sign in' : 'Create account'}
             </p>
             <p className="text-sm mb-6" style={{ color: 'var(--color-stone)' }}>
-              {mode === 'signin' ? 'Welcome back to Pourlog.' : 'Start your coffee journal.'}
+              {required && mode === 'signin' ? 'Sign in to access your journal.' : mode === 'signin' ? 'Welcome back to Pourlog.' : 'Start your coffee journal.'}
             </p>
 
             {/* ── Form ────────────────────────────────────────────────── */}

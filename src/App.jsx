@@ -59,12 +59,12 @@ export default function App() {
   }
 
   async function handleImport(data) {
-    if (!user) { setAuthOpen(true); return }
     const stripImported = arr => arr?.map(({ imported: _i, ...rest }) => rest) ?? []
     const ups = []
     if (data.roasteries?.length) ups.push(supabase.from('roasteries').upsert(stripImported(data.roasteries), { onConflict: 'id' }))
     if (data.beans?.length)      ups.push(supabase.from('beans').upsert(stripImported(data.beans), { onConflict: 'id' }))
     if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(stripImported(data.recipes), { onConflict: 'id' }))
+    // Filter out legacy 'default-' prefixed IDs from old exports (they're not valid UUIDs)
     const userEq = (data.equipment ?? []).filter(e => !e.id?.startsWith('default-'))
     if (userEq.length)           ups.push(supabase.from('equipment').upsert(userEq, { onConflict: 'id' }))
     await Promise.all(ups)
@@ -150,6 +150,11 @@ function MainApp({
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ── Auth gate — must be signed in to use the main app ────────────────────
+  if (!user) {
+    return <AuthModal required onSignIn={signIn} onSignUp={signUp} onClose={() => {}} />
+  }
 
   return (
     <>

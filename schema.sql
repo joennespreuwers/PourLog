@@ -147,5 +147,3 @@ create policy "Auth delete equipment" on equipment for delete using (auth.uid() 
 
 drop policy if exists "Auth upsert own profile" on profiles;
 create policy "Auth upsert own profile" on profiles for all using (auth.uid() = id) with check (auth.uid() = id);
-
-

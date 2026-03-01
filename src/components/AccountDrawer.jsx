@@ -27,7 +27,7 @@ export default function AccountDrawer({ open, onClose, user, onUpdateProfile, on
   const [passwordMsg, setPasswordMsg]     = useState(null)
   const [passwordSaving, setPasswordSaving] = useState(false)
 
-  // Reset state + load current slug whenever the drawer opens
+  // Reset form + messages only when the drawer opens (not on user prop changes)
   useEffect(() => {
     if (!open) return
     setDisplayName(user?.user_metadata?.display_name ?? '')
@@ -45,7 +45,14 @@ export default function AccountDrawer({ open, onClose, user, onUpdateProfile, on
           setSlugStatus(null)
         })
     }
-  }, [open, user])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Keep display name in sync when auth user metadata updates (e.g. after profile save)
+  // but do NOT reset messages — that clears just-shown confirmations
+  useEffect(() => {
+    if (open) setDisplayName(user?.user_metadata?.display_name ?? '')
+  }, [user, open])
 
   function onSlugChange(val) {
     const v = val.toLowerCase().replace(/[^a-z0-9_-]/g, '')

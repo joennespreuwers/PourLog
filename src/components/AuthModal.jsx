@@ -75,7 +75,7 @@ export default function AuthModal({ onSignIn, onSignUp, onClose, required = fals
               {mode === 'signin' ? 'Sign in' : 'Create account'}
             </p>
             <p className="text-sm mb-6" style={{ color: 'var(--color-stone)' }}>
-              {required && mode === 'signin' ? 'Sign in to access your journal.' : mode === 'signin' ? 'Welcome back to Pourlog.' : 'Start your coffee journal.'}
+              {required && mode === 'signin' ? 'Sign in to access your journal.' : mode === 'signin' ? 'Welcome back to PourLog.' : 'Start your coffee journal.'}
             </p>
 
             {/* ── Form ────────────────────────────────────────────────── */}

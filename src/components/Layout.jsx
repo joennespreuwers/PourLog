@@ -41,8 +41,8 @@ export default function Layout({ activeTab, onTabChange, onBack, user, syncStatu
             </button>
           )}
           {/* Wordmark */}
-          <Link to="/welcome" className="font-serif text-lg font-medium tracking-tight select-none" style={{ color: 'var(--color-espresso)' }}>
-            Pourlog
+          <Link to="/" className="font-serif text-lg font-medium tracking-tight select-none" style={{ color: 'var(--color-espresso)' }}>
+            PourLog
           </Link>
 
           {/* Nav tabs — centred, hidden on mobile */}
@@ -147,11 +147,11 @@ export default function Layout({ activeTab, onTabChange, onBack, user, syncStatu
       <footer className="hidden sm:block border-t mt-auto" style={{ borderColor: 'var(--color-border)' }}>
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
           <div>
-            <span className="font-serif text-sm" style={{ color: 'var(--color-espresso)' }}>Pourlog</span>
+            <span className="font-serif text-sm" style={{ color: 'var(--color-espresso)' }}>PourLog</span>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕</p>
           </div>
           <nav className="flex items-center gap-5 text-xs" style={{ color: 'var(--color-stone)' }}>
-            <Link to="/welcome" className="hover:underline">About</Link>
+            <Link to="/" className="hover:underline">About</Link>
             <Link to="/help" className="hover:underline">Help</Link>
           </nav>
         </div>

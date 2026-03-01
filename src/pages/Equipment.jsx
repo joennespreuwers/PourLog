@@ -32,12 +32,12 @@ export default function Equipment({ equipment, onAdd, onUpdate, onDelete, onExpo
       try {
         const data = JSON.parse(evt.target.result)
         if (!data.roasteries && !data.beans && !data.recipes && !data.equipment) {
-          setImportError('Not a valid Pourlog export file.')
+          setImportError('Not a valid PourLog export file.')
           return
         }
         setImportConfirm(data)
       } catch {
-        setImportError('Could not parse file — make sure it\'s a Pourlog JSON export.')
+        setImportError('Could not parse file — make sure it\'s a PourLog JSON export.')
       }
     }
     reader.readAsText(file)

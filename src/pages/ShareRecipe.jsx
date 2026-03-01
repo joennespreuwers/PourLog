@@ -49,7 +49,7 @@ export default function ShareRecipe() {
   }, [id])
 
   useEffect(() => {
-    if (recipe?.title) document.title = `${recipe.title} | Pourlog`
+    if (recipe?.title) document.title = `${recipe.title} | PourLog`
   }, [recipe?.title])
 
   if (status === 'loading') return (
@@ -61,7 +61,7 @@ export default function ShareRecipe() {
   if (status === 'notfound') return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--color-paper)' }}>
       <p className="font-serif text-2xl" style={{ color: 'var(--color-espresso)' }}>Recipe not found</p>
-      <Link to="/" className="text-sm" style={{ color: 'var(--color-roast)' }}>← Back to Pourlog</Link>
+      <Link to="/" className="text-sm" style={{ color: 'var(--color-roast)' }}>← Back to PourLog</Link>
     </div>
   )
 
@@ -73,7 +73,7 @@ export default function ShareRecipe() {
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-paper)' }}>
       {/* Header */}
       <div className="px-4 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: '#fff' }}>
-        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>Pourlog</Link>
+        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>PourLog</Link>
         <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--color-cream)', color: 'var(--color-stone)' }}>shared recipe</span>
       </div>
 
@@ -127,14 +127,14 @@ export default function ShareRecipe() {
         {/* Actions */}
         <div className="flex flex-col gap-3 pt-2">
           <Link
-            to={`/?copy_recipe=${id}`}
+            to={`/app?copy_recipe=${id}`}
             className="w-full py-3 rounded-xl text-sm font-medium text-center block cursor-pointer hover:opacity-90"
             style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}
           >
-            Copy this technique to my Pourlog
+            Copy this technique to my PourLog
           </Link>
           <Link to="/" className="text-sm text-center" style={{ color: 'var(--color-stone)' }}>
-            ← Back to Pourlog
+            ← Back to PourLog
           </Link>
         </div>
       </div>

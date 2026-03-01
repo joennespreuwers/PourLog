@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useSearchParams } from 'react-router-dom'
+import { Routes, Route, Navigate, useSearchParams, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
 import Roasteries from './pages/Roasteries'
 import Beans from './pages/Beans'
@@ -13,6 +13,7 @@ import ShareRoastery from './pages/ShareRoastery'
 import ProfilePage from './pages/ProfilePage'
 import WelcomePage from './pages/WelcomePage'
 import HelpPage from './pages/HelpPage'
+import LoginPage from './pages/LoginPage'
 import { useAuth } from './hooks/useAuth'
 import { useSupabaseData } from './hooks/useSupabaseData'
 import { supabase } from './lib/supabase'
@@ -75,13 +76,16 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/" element={<WelcomePage />} />
+      <Route path="/welcome" element={<Navigate to="/" replace />} />
+      <Route path="/login"   element={<LoginPage />} />
       <Route path="/help"    element={<HelpPage />} />
       <Route path="/share/recipe/:id" element={<ShareRecipe />} />
       <Route path="/share/bean/:id"   element={<ShareBean />} />
       <Route path="/share/roastery/:id" element={<ShareRoastery />} />
       <Route path="/u/:handle" element={<ProfilePage />} />
-      <Route path="*" element={<MainApp
+      <Route path="/app" element={<MainApp
+
         user={user} authLoading={authLoading}
         authOpen={authOpen} setAuthOpen={setAuthOpen}
         accountOpen={accountOpen} setAccountOpen={setAccountOpen}
@@ -96,6 +100,7 @@ export default function App() {
         updateProfile={updateProfile} updatePassword={updatePassword}
         handleExport={handleExport} handleImport={handleImport}
       />} />
+      <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>
   )
 }
@@ -111,14 +116,15 @@ function MainApp({
   handleExport, handleImport,
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
   const [copyRecipe, setCopyRecipe] = useState(null)
 
   useEffect(() => {
-    document.title = activeTab === 'Roasteries' ? 'Roasteries | Pourlog'
-      : activeTab === 'Beans'      ? 'Beans | Pourlog'
-      : activeTab === 'Recipes'    ? 'Recipes | Pourlog'
-      : activeTab === 'Equipment'  ? 'Equipment | Pourlog'
-      : 'Pourlog'
+    document.title = activeTab === 'Roasteries' ? 'Roasteries | PourLog'
+      : activeTab === 'Beans'      ? 'Beans | PourLog'
+      : activeTab === 'Recipes'    ? 'Recipes | PourLog'
+      : activeTab === 'Equipment'  ? 'Equipment | PourLog'
+      : 'PourLog'
   }, [activeTab])
 
   useEffect(() => {
@@ -152,9 +158,7 @@ function MainApp({
   }, [])
 
   // ── Auth gate — must be signed in to use the main app ────────────────────
-  if (!user) {
-    return <AuthModal required onSignIn={signIn} onSignUp={signUp} onClose={() => {}} />
-  }
+  if (!user) return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />
 
   return (
     <>

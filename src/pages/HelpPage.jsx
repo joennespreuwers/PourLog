@@ -40,11 +40,11 @@ export default function HelpPage() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-paper)' }}>
       {/* Nav */}
       <header className="px-6 py-4 flex items-center justify-between border-b" style={{ borderColor: 'var(--color-border)', backgroundColor: '#fff' }}>
-        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>Pourlog</Link>
+        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>PourLog</Link>
         <nav className="flex items-center gap-4">
-          <Link to="/welcome" className="text-sm" style={{ color: 'var(--color-stone)' }}>About</Link>
+          <Link to="/" className="text-sm" style={{ color: 'var(--color-stone)' }}>About</Link>
           <Link
-            to="/"
+            to="/app"
             className="px-4 py-1.5 rounded-md text-sm font-medium"
             style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}
           >
@@ -56,19 +56,19 @@ export default function HelpPage() {
       <div className="max-w-2xl mx-auto px-6 py-12 flex flex-col gap-12 w-full">
         <div>
           <h1 className="font-serif text-4xl font-medium mb-2" style={{ color: 'var(--color-espresso)' }}>Help</h1>
-          <p className="text-sm" style={{ color: 'var(--color-stone)' }}>Everything you need to know about Pourlog.</p>
+          <p className="text-sm" style={{ color: 'var(--color-stone)' }}>Everything you need to know about PourLog.</p>
         </div>
 
         {/* Getting started */}
         <Section title="Getting started">
-          <Step n={1} title="No account needed">
-            Open the app and start adding roasteries, beans and recipes right away. Everything is saved locally in your browser.
+          <Step n={1} title="Create a free account">
+            Sign up with your email at the login page. Your account keeps everything safe and synced across devices.
           </Step>
-          <Step n={2} title="Sign up to sync">
-            Create an account and your data syncs to the cloud automatically. Access it from any device.
-          </Step>
-          <Step n={3} title="Start with roasteries">
+          <Step n={2} title="Start with roasteries">
             Add the roasteries you buy from first — then link beans to them, and recipes to beans.
+          </Step>
+          <Step n={3} title="Log your best cups">
+            Record every recipe down to dose, yield, grind size and brew time. Rate it, add notes, and share it.
           </Step>
         </Section>
 
@@ -111,7 +111,7 @@ export default function HelpPage() {
             Open the detail view for any recipe, bean or roastery and tap the share icon. You get a public link and a QR code. Anyone with the link can view it — no account needed.
           </Q>
           <Q q="Can someone import what I shared?">
-            Yes. On any shared page there’s an “Add to my Pourlog” or “Copy this technique” button that adds the item to the visitor’s own log as a <strong>Cloned</strong> item.
+            Yes. On any shared page there’s an “Add to my PourLog” or “Copy this technique” button that adds the item to the visitor’s own log as a <strong>Cloned</strong> item.
           </Q>
         </Section>
 
@@ -144,7 +144,7 @@ export default function HelpPage() {
             Green – synced with cloud. Blue – currently syncing. Orange – sync is disabled. Grey – local only (not signed in). Red – sync error.
           </Q>
           <Q q="Does it work offline?">
-            Yes. Pourlog is a Progressive Web App. All your local data is available offline instantly. Changes sync to the cloud when you're back online.
+            Yes. PourLog is a Progressive Web App. Your data is cached locally so you can browse offline, and changes sync when you’re back online.
           </Q>
           <Q q="Can I install it as an app?">
             Yes — use "Add to Home Screen" in your browser. On desktop, look for the install icon in the address bar.
@@ -152,17 +152,17 @@ export default function HelpPage() {
         </Section>
 
         <div className="pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
-          <Link to="/" className="text-sm" style={{ color: 'var(--color-roast)' }}>← Open Pourlog</Link>
+          <Link to="/app" className="text-sm" style={{ color: 'var(--color-roast)' }}>← Open PourLog</Link>
         </div>
       </div>
 
       <footer className="mt-auto border-t px-6 py-5 flex items-center justify-between text-xs" style={{ borderColor: 'var(--color-border)', color: 'var(--color-stone)' }}>
         <div>
-          <span className="font-serif" style={{ color: 'var(--color-espresso)' }}>Pourlog</span>
+          <span className="font-serif" style={{ color: 'var(--color-espresso)' }}>PourLog</span>
           <p className="mt-0.5">© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕</p>
         </div>
         <nav className="flex gap-5">
-          <Link to="/welcome" className="hover:underline">About</Link>
+          <Link to="/" className="hover:underline">About</Link>
           <Link to="/" className="hover:underline">App</Link>
         </nav>
       </footer>

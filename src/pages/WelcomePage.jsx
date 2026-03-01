@@ -13,8 +13,8 @@ const FEATURES = [
   },
   {
     emoji: '☁️',
-    title: 'Local-first, cloud-backed',
-    description: 'Works offline instantly. Sign in to sync across devices — your data is always yours.',
+    title: 'Sync everywhere',
+    description: 'Your journal lives in the cloud. Sign in on any device and everything is right there — nothing lost, nothing duplicated.',
   },
   {
     emoji: '🔗',
@@ -38,11 +38,11 @@ export default function WelcomePage() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-paper)' }}>
       {/* Nav */}
       <header className="px-6 py-4 flex items-center justify-between border-b" style={{ borderColor: 'var(--color-border)', backgroundColor: '#fff' }}>
-        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>Pourlog</Link>
+        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>PourLog</Link>
         <nav className="flex items-center gap-4">
           <Link to="/help" className="text-sm" style={{ color: 'var(--color-stone)' }}>Help</Link>
           <Link
-            to="/"
+            to="/app"
             className="px-4 py-1.5 rounded-md text-sm font-medium"
             style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}
           >
@@ -62,7 +62,7 @@ export default function WelcomePage() {
         </p>
         <div className="flex gap-3 flex-wrap justify-center">
           <Link
-            to="/"
+            to="/app"
             className="px-6 py-3 rounded-xl text-sm font-medium"
             style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}
           >
@@ -101,26 +101,26 @@ export default function WelcomePage() {
           Ready to brew better?
         </h2>
         <p className="text-sm max-w-md leading-relaxed" style={{ color: 'color-mix(in srgb, var(--color-paper) 70%, transparent)' }}>
-          No account needed to get started. Sign up whenever you want to sync across devices.
+          Create a free account and start tracking your favourite coffees right away.
         </p>
         <Link
-          to="/"
+          to="/app"
           className="px-6 py-3 rounded-xl text-sm font-medium"
           style={{ backgroundColor: 'var(--color-paper)', color: 'var(--color-espresso)' }}
         >
-          Open Pourlog →
+          Open PourLog →
         </Link>
       </section>
 
       {/* Footer */}
       <footer className="mt-auto border-t px-6 py-5 flex items-center justify-between text-xs" style={{ borderColor: 'var(--color-border)', color: 'var(--color-stone)' }}>
         <div>
-          <span className="font-serif" style={{ color: 'var(--color-espresso)' }}>Pourlog</span>
+          <span className="font-serif" style={{ color: 'var(--color-espresso)' }}>PourLog</span>
           <p className="mt-0.5">© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕</p>
         </div>
         <nav className="flex gap-5">
           <Link to="/help" className="hover:underline">Help</Link>
-          <Link to="/" className="hover:underline">App</Link>
+          <Link to="/app" className="hover:underline">App</Link>
         </nav>
       </footer>
     </div>

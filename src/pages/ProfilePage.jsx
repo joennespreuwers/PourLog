@@ -62,7 +62,7 @@ export default function ProfilePage() {
       setRoasteries(rRes.data ?? [])
       setBeans(bRes.data ?? [])
       setRecipes(recRes.data ?? [])
-      document.title = `${profileData.display_name ?? 'Profile'} | Pourlog`
+      document.title = `${profileData.display_name ?? 'Profile'} | PourLog`
       setStatus('found')
     }
     load()
@@ -77,7 +77,7 @@ export default function ProfilePage() {
   if (status === 'notfound') return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--color-paper)' }}>
       <p className="font-serif text-2xl" style={{ color: 'var(--color-espresso)' }}>Profile not found</p>
-      <Link to="/" className="text-sm" style={{ color: 'var(--color-roast)' }}>← Back to Pourlog</Link>
+      <Link to="/" className="text-sm" style={{ color: 'var(--color-roast)' }}>← Back to PourLog</Link>
     </div>
   )
 
@@ -109,7 +109,7 @@ export default function ProfilePage() {
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-paper)' }}>
       {/* Header */}
       <div className="px-4 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: '#fff' }}>
-        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>Pourlog</Link>
+        <Link to="/" className="font-serif text-lg font-medium" style={{ color: 'var(--color-espresso)' }}>PourLog</Link>
         <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--color-cream)', color: 'var(--color-stone)' }}>profile</span>
       </div>
 
@@ -175,7 +175,7 @@ export default function ProfilePage() {
         </div>
 
         <Link to="/" className="text-sm text-center" style={{ color: 'var(--color-stone)' }}>
-          ← Back to Pourlog
+          ← Back to PourLog
         </Link>
       </div>
     </div>

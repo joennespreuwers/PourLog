@@ -159,7 +159,7 @@ export default function HelpPage() {
       <footer className="mt-auto border-t px-6 py-5 flex items-center justify-between text-xs" style={{ borderColor: 'var(--color-border)', color: 'var(--color-stone)' }}>
         <div>
           <span className="font-serif" style={{ color: 'var(--color-espresso)' }}>PourLog</span>
-          <p className="mt-0.5">© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕</p>
+          <p className="mt-0.5">© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕ · <span className="font-mono opacity-60">{__COMMIT_SHA__}</span></p>
         </div>
         <nav className="flex gap-5">
           <Link to="/" className="hover:underline">About</Link>

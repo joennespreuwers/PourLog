@@ -2,8 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'child_process'
+
+const commitSha = (() => {
+  try { return execSync('git rev-parse --short HEAD').toString().trim() } catch { return 'dev' }
+})()
 
 export default defineConfig({
+  define: {
+    __COMMIT_SHA__: JSON.stringify(commitSha),
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -12,8 +20,8 @@ export default defineConfig({
       // Precache all built assets so the app shell loads fully offline
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Pourlog',
-        short_name: 'Pourlog',
+        name: 'PourLog',
+        short_name: 'PourLog',
         description: 'Specialty coffee journal',
         theme_color: '#2c1810',
         background_color: '#f5f0e8',

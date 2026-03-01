@@ -148,7 +148,7 @@ export default function Layout({ activeTab, onTabChange, onBack, user, syncStatu
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
           <div>
             <span className="font-serif text-sm" style={{ color: 'var(--color-espresso)' }}>PourLog</span>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕ · <span className="font-mono opacity-60">{__COMMIT_SHA__}</span></p>
           </div>
           <nav className="flex items-center gap-5 text-xs" style={{ color: 'var(--color-stone)' }}>
             <Link to="/" className="hover:underline">About</Link>

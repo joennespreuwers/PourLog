@@ -375,7 +375,7 @@ function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, 
         <Heart size={14} fill={r.is_favorite ? 'currentColor' : 'none'} style={{ color: r.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
       </button>
 
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2 pr-32">
         <div className="flex flex-wrap gap-1">
           {brewer && brewerColor && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: brewerColor.bg, color: brewerColor.text }}>{brewer.name}</span>}
           {filter && filterColor && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: filterColor.bg, color: filterColor.text }}>{filter.name}</span>}

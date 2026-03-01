@@ -202,7 +202,7 @@ function RoasteryCard({ roastery: r, onView, onEdit, onDelete, onFavorite, onClo
         <Heart size={14} fill={r.is_favorite ? 'currentColor' : 'none'} style={{ color: r.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
       </button>
 
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between pr-20">
         <span className="text-xs font-medium tracking-wide uppercase" style={{ color: 'var(--color-stone)' }}>
           {[r.city, r.country].filter(Boolean).join(' · ')}
         </span>

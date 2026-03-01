@@ -389,7 +389,7 @@ function BeanCard({ bean: b, roasteryById, onView, onEdit, onDelete, onFavorite,
         <Heart size={14} fill={b.is_favorite ? 'currentColor' : 'none'} style={{ color: b.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
       </button>
 
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2 pr-20">
         <div className="flex flex-wrap gap-1">
           {b.process && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: processStyle.bg, color: processStyle.text }}>{b.process}</span>}
           {b.roast_level && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: roastStyle.bg, color: roastStyle.text }}>{b.roast_level}</span>}

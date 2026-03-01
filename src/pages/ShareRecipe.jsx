@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import StarRating from '../components/StarRating'
 
 function formatTime(secs) {
   if (!secs) return null
@@ -78,10 +77,9 @@ export default function ShareRecipe() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-8 flex flex-col gap-6">
-        {/* Title + rating */}
-        <div className="flex items-start justify-between gap-3">
+        {/* Title */}
+        <div className="flex items-start gap-3">
           <h1 className="font-serif text-3xl font-medium leading-tight" style={{ color: 'var(--color-espresso)' }}>{recipe.title}</h1>
-          {recipe.rating && <div className="shrink-0 pt-1"><StarRating value={recipe.rating} /></div>}
         </div>
 
         {/* Bean / roastery */}

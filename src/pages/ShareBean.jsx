@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import StarRating from '../components/StarRating'
 import { SCA_FLAT, TAG_PALETTE } from '../components/TagInput'
 
 function normNote(note) {
@@ -99,7 +98,6 @@ export default function ShareBean() {
           </div>
           <div className="flex items-start justify-between gap-3">
             <h1 className="font-serif text-3xl font-medium leading-tight" style={{ color: 'var(--color-espresso)' }}>{bean.name}</h1>
-            {bean.rating && <div className="shrink-0 pt-1"><StarRating value={bean.rating} /></div>}
           </div>
           {roastery && <p className="text-sm" style={{ color: 'var(--color-stone)' }}>{roastery.name}{roastery.country ? ` · ${roastery.country}` : ''}</p>}
         </div>

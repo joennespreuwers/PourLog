@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Pencil, Trash2, Copy, Share2, Heart } from 'lucide-react'
-import StarRating from '../components/StarRating'
-import StarPicker from '../components/StarPicker'
 import Drawer from '../components/Drawer'
 import DetailPage from '../components/DetailPage'
 import { Input, Textarea, Select, FieldRow, FieldSection } from '../components/FormFields'
@@ -42,7 +40,7 @@ const EMPTY = {
   brewer_id: '', filter_id: '',
   dose_g: '', yield_g: '', water_temp_c: '', grind_size: '',
   grinder_id: '',
-  time_m: '', time_s: '', steps: '', rating: null, notes: '',
+  time_m: '', time_s: '', steps: '', notes: '',
 }
 
 export default function Recipes({ recipes, beans, roasteries = [], equipment = [], onAdd, onUpdate, onDelete, copyRecipe, onCopyConsumed }) {
@@ -94,7 +92,7 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
       time_m: r.brew_time_sec != null ? String(Math.floor(r.brew_time_sec / 60)) : '',
       time_s: r.brew_time_sec != null ? String(r.brew_time_sec % 60).padStart(2, '0') : '',
       steps: r.steps ?? '',
-      rating: techniqueOnly ? null : (r.rating ?? null), notes: r.notes ?? '',
+      notes: r.notes ?? '',
     })
     setDetailId(null)
     setDrawerOpen(true)
@@ -113,7 +111,7 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
       time_m: r.brew_time_sec != null ? String(Math.floor(r.brew_time_sec / 60)) : '',
       time_s: r.brew_time_sec != null ? String(r.brew_time_sec % 60).padStart(2, '0') : '',
       steps: r.steps ?? '',
-      rating: r.rating ?? null, notes: r.notes ?? '',
+      notes: r.notes ?? '',
     })
     setDetailId(null)
     setDrawerOpen(true)
@@ -130,7 +128,7 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
       time_m: r.brew_time_sec != null ? String(Math.floor(r.brew_time_sec / 60)) : '',
       time_s: r.brew_time_sec != null ? String(r.brew_time_sec % 60).padStart(2, '0') : '',
       steps: r.steps ?? '', 
-      rating: r.rating ?? null, notes: r.notes ?? '',
+      notes: r.notes ?? '',
     })
     setDrawerOpen(true)
   }
@@ -334,7 +332,6 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
           <FieldSection title="Instructions" />
           <Textarea label="Step-by-step" rows={5} value={form.steps} onChange={set('steps')} placeholder={"1. Bloom 30g, 45s\n2. Pour to 125g at 1:00\n…"} maxLength={2000} />
           <Textarea label="Notes" rows={2} value={form.notes} onChange={set('notes')} placeholder="What worked, what to tweak…" maxLength={500} />
-          <StarPicker label="Rating" value={form.rating} onChange={v => setForm(p => ({ ...p, rating: v }))} />
           <FormActions editing={!!editing} label="recipe" onCancel={() => setDrawerOpen(false)} />
         </form>
       </Drawer>
@@ -381,7 +378,6 @@ function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, 
           {filter && filterColor && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: filterColor.bg, color: filterColor.text }}>{filter.name}</span>}
           {r.imported && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#e0e7ff', color: '#3730a3' }}>Cloned</span>}
         </div>
-        {r.rating && <StarRating value={r.rating} />}
       </div>
 
       <div>
@@ -436,13 +432,12 @@ function RecipeDetail({ recipe: r, beanById, roasteryById, equipmentById }) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Badges + rating */}
+      {/* Badges */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex flex-wrap gap-1.5">
           {brewer && brewerColor && <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ backgroundColor: brewerColor.bg, color: brewerColor.text }}>{brewer.name}</span>}
           {filter && filterColor && <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ backgroundColor: filterColor.bg, color: filterColor.text }}>{filter.name}</span>}
         </div>
-        {r.rating && <StarRating value={r.rating} />}
       </div>
 
       {bean && (

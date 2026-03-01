@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import StarRating from '../components/StarRating'
 
 function StatCard({ label, value }) {
   return (
@@ -12,7 +11,7 @@ function StatCard({ label, value }) {
   )
 }
 
-function ItemRow({ title, subtitle, rating, tag, href }) {
+function ItemRow({ title, subtitle, tag, href }) {
   return (
     <Link to={href} className="flex items-center justify-between gap-3 py-3 group" style={{ borderTop: '1px solid var(--color-border)' }}>
       <div className="flex flex-col gap-0.5 min-w-0">
@@ -24,7 +23,6 @@ function ItemRow({ title, subtitle, rating, tag, href }) {
         </div>
         {subtitle && <p className="text-xs truncate" style={{ color: 'var(--color-stone)' }}>{subtitle}</p>}
       </div>
-      {rating && <div className="shrink-0"><StarRating value={rating} /></div>}
     </Link>
   )
 }
@@ -93,9 +91,9 @@ export default function ProfilePage() {
 
   // Build unified list for "All" view
   const allFavs = [
-    ...favRoasteries.map(r => ({ type: 'Roastery', title: r.name, subtitle: [r.city, r.country].filter(Boolean).join(', '), rating: r.rating, href: `/share/roastery/${r.id}`, created_at: r.created_at })),
-    ...favBeans.map(b => ({ type: 'Bean', title: b.name, subtitle: [roasteryById[b.roastery_id]?.name, b.origin_country].filter(Boolean).join(' · '), rating: b.rating, href: `/share/bean/${b.id}`, created_at: b.created_at })),
-    ...favRecipes.map(r => ({ type: 'Recipe', title: r.title, subtitle: beanById[r.bean_id] ? `${beanById[r.bean_id].name}${r.brew_method ? ' · ' + r.brew_method : ''}` : (r.brew_method ?? null), rating: r.rating, href: `/share/recipe/${r.id}`, created_at: r.created_at })),
+    ...favRoasteries.map(r => ({ type: 'Roastery', title: r.name, subtitle: [r.city, r.country].filter(Boolean).join(', '), href: `/share/roastery/${r.id}`, created_at: r.created_at })),
+    ...favBeans.map(b => ({ type: 'Bean', title: b.name, subtitle: [roasteryById[b.roastery_id]?.name, b.origin_country].filter(Boolean).join(' · '), href: `/share/bean/${b.id}`, created_at: b.created_at })),
+    ...favRecipes.map(r => ({ type: 'Recipe', title: r.title, subtitle: beanById[r.bean_id] ? `${beanById[r.bean_id].name}${r.brew_method ? ' · ' + r.brew_method : ''}` : (r.brew_method ?? null), href: `/share/recipe/${r.id}`, created_at: r.created_at })),
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
   const visibleItems =
@@ -168,7 +166,7 @@ export default function ProfilePage() {
           ) : (
             <div>
               {visibleItems.map((item, i) => (
-                <ItemRow key={i} title={item.title} subtitle={item.subtitle} rating={item.rating} tag={activeFilter === 'All' ? item.type : null} href={item.href} />
+                <ItemRow key={i} title={item.title} subtitle={item.subtitle} tag={activeFilter === 'All' ? item.type : null} href={item.href} />
               ))}
             </div>
           )}

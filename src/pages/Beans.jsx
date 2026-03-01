@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { Pencil, Trash2, Share2, Heart, Copy } from 'lucide-react'
-import StarRating from '../components/StarRating'
-import StarPicker from '../components/StarPicker'
 import Drawer from '../components/Drawer'
 import DetailPage from '../components/DetailPage'
 import TagInput, { TAG_PALETTE, SCA_FLAT } from '../components/TagInput'
@@ -56,7 +54,7 @@ const ROAST_COLORS = {
 const EMPTY = {
   name: '', roastery_id: '', origin_country: '', origin_region: '', farm: '',
   variety: '', process: '', roast_level: '', altitude_masl: '', harvest_date: '',
-  roast_date: '', flavor_notes: [], price_per_100g: '', rating: null, notes: '',
+  roast_date: '', flavor_notes: [], price_per_100g: '', notes: '',
 }
 
 export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) {
@@ -93,7 +91,7 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
       process: b.process ?? '', roast_level: b.roast_level ?? '', altitude_masl: b.altitude_masl ?? '',
       harvest_date: b.harvest_date ?? '', roast_date: b.roast_date ?? '',
       flavor_notes: (b.flavor_notes ?? []).map(normNote), price_per_100g: b.price_per_100g ?? '',
-      rating: b.rating ?? null, notes: b.notes ?? '',
+      notes: b.notes ?? '',
     })
     setDrawerOpen(true)
   }
@@ -106,7 +104,7 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
       process: b.process ?? '', roast_level: b.roast_level ?? '', altitude_masl: b.altitude_masl ?? '',
       harvest_date: b.harvest_date ?? '', roast_date: b.roast_date ?? '',
       flavor_notes: (b.flavor_notes ?? []).map(normNote), price_per_100g: b.price_per_100g ?? '',
-      rating: b.rating ?? null, notes: b.notes ?? '',
+      notes: b.notes ?? '',
     })
     setDrawerOpen(true)
   }
@@ -272,7 +270,6 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
 
           <TagInput label="Flavor notes" value={form.flavor_notes} onChange={v => setForm(p => ({ ...p, flavor_notes: v }))} />
           <Textarea label="Personal notes" rows={3} value={form.notes} onChange={set('notes')} placeholder="Your tasting impressions…" maxLength={500} />
-          <StarPicker label="Rating" value={form.rating} onChange={v => setForm(p => ({ ...p, rating: v }))} />
           <FormActions editing={!!editing} label="bean" onCancel={() => setDrawerOpen(false)} />
         </form>
       </Drawer>
@@ -292,7 +289,6 @@ function BeanDetail({ b, roasteryById }) {
           {b.process && processStyle && <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ backgroundColor: processStyle.bg, color: processStyle.text }}>{b.process}</span>}
           {b.roast_level && roastStyle && <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ backgroundColor: roastStyle.bg, color: roastStyle.text }}>{b.roast_level}</span>}
         </div>
-        {b.rating && <StarRating value={b.rating} />}
       </div>
 
       {b.flavor_notes?.length > 0 && (
@@ -395,7 +391,6 @@ function BeanCard({ bean: b, roasteryById, onView, onEdit, onDelete, onFavorite,
           {b.roast_level && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: roastStyle.bg, color: roastStyle.text }}>{b.roast_level}</span>}
           {b.imported && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#e0e7ff', color: '#3730a3' }}>Cloned</span>}
         </div>
-        {b.rating && <StarRating value={b.rating} />}
       </div>
 
       <div>

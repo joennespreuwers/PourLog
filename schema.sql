@@ -19,7 +19,6 @@ create table if not exists roasteries (
   city         text,
   website      text,
   description  text,
-  rating       int check (rating >= 1 and rating <= 5),
   notes        text,
   is_favorite  boolean default false,
   photo_url    text,
@@ -42,7 +41,6 @@ create table if not exists beans (
   roast_date       date,
   flavor_notes     text[],
   price_per_100g   numeric,
-  rating           int check (rating >= 1 and rating <= 5),
   notes            text,
   is_favorite      boolean default false,
   created_at       timestamptz default now()
@@ -61,7 +59,6 @@ create table if not exists recipes (
   grind_size     text,
   brew_time_sec  int,
   steps          text,
-  rating         int check (rating >= 1 and rating <= 5),
   notes          text,
   is_favorite    boolean default false,
   created_at     timestamptz default now()
@@ -197,3 +194,8 @@ create policy "Users manage followed recipes" on followed_recipes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 alter table recipes add column if not exists origin_id uuid references recipes(id) on delete set null;
+
+-- ─── Purge rating columns (run to remove from existing tables) ───────────────
+alter table roasteries drop column if exists rating;
+alter table beans      drop column if exists rating;
+alter table recipes    drop column if exists rating;

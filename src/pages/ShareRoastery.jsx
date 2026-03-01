@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import StarRating from '../components/StarRating'
 
 export default function ShareRoastery() {
   const { id } = useParams()
@@ -55,7 +54,6 @@ export default function ShareRoastery() {
               <p className="text-sm mt-1" style={{ color: 'var(--color-stone)' }}>{[r.city, r.country].filter(Boolean).join(', ')}</p>
             )}
           </div>
-          {r.rating && <div className="shrink-0 pt-1"><StarRating value={r.rating} /></div>}
         </div>
 
         {r.website && (

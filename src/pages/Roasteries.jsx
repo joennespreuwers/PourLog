@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { Pencil, Trash2, Share2, Heart, Copy } from 'lucide-react'
-import StarRating from '../components/StarRating'
-import StarPicker from '../components/StarPicker'
 import Drawer from '../components/Drawer'
 import DetailPage from '../components/DetailPage'
 import { Input, Textarea, FieldRow, FieldSection } from '../components/FormFields'
@@ -9,7 +7,7 @@ import EmptyState from '../components/EmptyState'
 import SharePopup from '../components/SharePopup'
 import ImageUpload from '../components/ImageUpload'
 
-const EMPTY = { name: '', country: '', city: '', website: '', description: '', rating: null, notes: '', photo_url: null }
+const EMPTY = { name: '', country: '', city: '', website: '', description: '', notes: '', photo_url: null }
 
 export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -22,25 +20,23 @@ export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
   const [shareId, setShareId] = useState(null)
 
   const [filterCountry, setFilterCountry] = useState('')
-  const [filterRating, setFilterRating] = useState('')
   const countries = [...new Set(roasteries.map(r => r.country).filter(Boolean))].sort()
   const filtered = roasteries.filter(r => {
     if (filterCountry && r.country !== filterCountry) return false
-    if (filterRating && (r.rating ?? 0) < Number(filterRating)) return false
     return true
   })
-  const isFiltering = filterCountry || filterRating
+  const isFiltering = filterCountry
 
   function openAdd() { setEditing(null); setForm(EMPTY); setDrawerOpen(true) }
   function openEdit(r) {
     setEditing(r)
-    setForm({ name: r.name ?? '', country: r.country ?? '', city: r.city ?? '', website: r.website ?? '', description: r.description ?? '', rating: r.rating ?? null, notes: r.notes ?? '', photo_url: r.photo_url ?? null })
+    setForm({ name: r.name ?? '', country: r.country ?? '', city: r.city ?? '', website: r.website ?? '', description: r.description ?? '', notes: r.notes ?? '', photo_url: r.photo_url ?? null })
     setDrawerOpen(true)
   }
   function openClone(r) {
     setEditing(null)
     setCloningImportedId(r.imported ? r.id : null)
-    setForm({ name: r.name ?? '', country: r.country ?? '', city: r.city ?? '', website: r.website ?? '', description: r.description ?? '', rating: r.rating ?? null, notes: r.notes ?? '', photo_url: r.photo_url ?? null })
+    setForm({ name: r.name ?? '', country: r.country ?? '', city: r.city ?? '', website: r.website ?? '', description: r.description ?? '', notes: r.notes ?? '', photo_url: r.photo_url ?? null })
     setDrawerOpen(true)
   }
   function handleSubmit(e) {
@@ -77,12 +73,8 @@ export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
               {countries.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           )}
-          <select value={filterRating} onChange={e => setFilterRating(e.target.value)} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', backgroundColor: '#fff', color: 'var(--color-espresso)' }}>
-            <option value="">Any rating</option>
-            {[5,4,3,2,1].map(n => <option key={n} value={n}>{n}★ and up</option>)}
-          </select>
           {isFiltering && (
-            <button onClick={() => { setFilterCountry(''); setFilterRating('') }} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', color: 'var(--color-stone)', backgroundColor: '#fff' }}>Clear</button>
+            <button onClick={() => { setFilterCountry('') }} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', color: 'var(--color-stone)', backgroundColor: '#fff' }}>Clear</button>
           )}
         </div>
       )}
@@ -155,7 +147,6 @@ export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
           <Textarea label="Description" rows={3} value={form.description} onChange={set('description')} placeholder="What makes them special…" maxLength={500} />
           <Textarea label="Personal notes" rows={3} value={form.notes} onChange={set('notes')} placeholder="Your impressions…" maxLength={500} />
           <ImageUpload value={form.photo_url} onChange={url => setForm(p => ({ ...p, photo_url: url }))} />
-          <StarPicker label="Rating" value={form.rating} onChange={v => setForm(p => ({ ...p, rating: v }))} />
           <FormActions editing={!!editing} label="roastery" onCancel={() => setDrawerOpen(false)} />
         </form>
       </Drawer>
@@ -208,7 +199,6 @@ function RoasteryCard({ roastery: r, onView, onEdit, onDelete, onFavorite, onClo
         </span>
         <div className="flex items-center gap-1.5">
           {r.imported && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#e0e7ff', color: '#3730a3' }}>Cloned</span>}
-          {r.rating && <StarRating value={r.rating} />}
         </div>
       </div>
 
@@ -250,12 +240,6 @@ function RoasteryDetail({ r }) {
         <div>
           <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'var(--color-stone)' }}>Website</p>
           <a href={r.website} target="_blank" rel="noopener noreferrer" className="text-sm break-all" style={{ color: 'var(--color-roast)' }}>{r.website}</a>
-        </div>
-      )}
-      {r.rating && (
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'var(--color-stone)' }}>Rating</p>
-          <StarRating value={r.rating} />
         </div>
       )}
       {r.description && (

@@ -48,7 +48,7 @@ export default function Roasteries({ roasteries, onAdd, onUpdate, onDelete }) {
     if (editing) {
       onUpdate(editing.id, form)
     } else {
-      onAdd(form)
+      onAdd(cloningImportedId ? { ...form, origin_id: cloningImportedId } : form)
       if (cloningImportedId) { onDelete(cloningImportedId); setCloningImportedId(null) }
     }
     setDrawerOpen(false)

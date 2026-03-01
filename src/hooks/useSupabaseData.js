@@ -85,24 +85,17 @@ export function useSupabaseData(user) {
   const pullAll = useCallback(async () => {
     if (!userRef.current) { setSyncStatus('local'); return }
 
-    // Snapshot imported items synchronously before any await
-    const localImportedR = rosteriesRef.current.filter(x => x.imported)
-    const localImportedB = beansRef.current.filter(x => x.imported)
-
     setSyncStatus('syncing')
-    const uid = userRef.current.id
+    const userId = userRef.current.id
     try {
-      const [r, b, rec, eq, ir, ib] = await Promise.all([
-        supabase.from('roasteries').select('*').eq('user_id', uid).order('created_at', { ascending: true }),
-        supabase.from('beans').select('*').eq('user_id', uid).order('created_at', { ascending: true }),
-        supabase.from('recipes').select('*').eq('user_id', uid).order('created_at', { ascending: true }),
-        supabase.from('equipment').select('*').eq('user_id', uid).order('created_at', { ascending: true }),
-        localImportedR.length
-          ? supabase.from('roasteries').select('*').in('id', localImportedR.map(x => x.id))
-          : Promise.resolve({ data: [] }),
-        localImportedB.length
-          ? supabase.from('beans').select('*').in('id', localImportedB.map(x => x.id))
-          : Promise.resolve({ data: [] }),
+      // Fetch own data + follow relations in one round-trip
+      const [r, b, rec, eq, fr, fb] = await Promise.all([
+        supabase.from('roasteries').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+        supabase.from('beans').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+        supabase.from('recipes').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+        supabase.from('equipment').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+        supabase.from('followed_roasteries').select('roastery_id, is_favorite').eq('user_id', userId),
+        supabase.from('followed_beans').select('bean_id, is_favorite').eq('user_id', userId),
       ])
 
       if (r.error || b.error || rec.error) throw new Error('fetch failed')
@@ -111,23 +104,32 @@ export function useSupabaseData(user) {
 
       // ── First login: seed default equipment into Supabase ────────────────
       if (eqData.length === 0) {
-        const seeds = DEFAULT_EQUIPMENT_SEED.map(e => ({ ...e, user_id: uid, created_at: new Date().toISOString() }))
+        const seeds = DEFAULT_EQUIPMENT_SEED.map(e => ({ ...e, user_id: userId, created_at: new Date().toISOString() }))
         const { data: inserted } = await supabase.from('equipment').insert(seeds).select()
         eqData = inserted ?? seeds
       }
 
-      // Merge fresh imported data preserving local-only overrides
-      const freshImportedR = (ir.data ?? []).map(row => {
-        const local = localImportedR.find(x => x.id === row.id)
-        return { ...row, imported: true, rating: local?.rating, notes: local?.notes, is_favorite: local?.is_favorite ?? false }
-      })
-      const freshImportedB = (ib.data ?? []).map(row => {
-        const local = localImportedB.find(x => x.id === row.id)
-        return { ...row, imported: true, rating: local?.rating, notes: local?.notes, is_favorite: local?.is_favorite ?? false }
-      })
+      // Fetch the actual followed items (public read, no user_id filter)
+      let followedR = [], followedB = []
+      if (fr.data?.length) {
+        const ids = fr.data.map(x => x.roastery_id)
+        const { data } = await supabase.from('roasteries').select('*').in('id', ids)
+        followedR = (data ?? []).map(row => {
+          const rel = fr.data.find(x => x.roastery_id === row.id)
+          return { ...row, imported: true, is_favorite: rel?.is_favorite ?? false }
+        })
+      }
+      if (fb.data?.length) {
+        const ids = fb.data.map(x => x.bean_id)
+        const { data } = await supabase.from('beans').select('*').in('id', ids)
+        followedB = (data ?? []).map(row => {
+          const rel = fb.data.find(x => x.bean_id === row.id)
+          return { ...row, imported: true, is_favorite: rel?.is_favorite ?? false }
+        })
+      }
 
-      setRoasteries([...r.data, ...freshImportedR])
-      setBeans(     [...b.data, ...freshImportedB])
+      setRoasteries([...(r.data ?? []), ...followedR])
+      setBeans(     [...(b.data ?? []), ...followedB])
       setRecipes(rec.data)
       setEquipment(eqData)
       setSyncStatus('synced')
@@ -146,41 +148,89 @@ export function useSupabaseData(user) {
   // ── Roasteries ───────────────────────────────────────────────────────────
   function addRoastery(data) {
     const id = data.id ?? uid()
-    if (rosteriesRef.current.some(r => r.id === id)) return  // dedup (clone/import)
+    if (rosteriesRef.current.some(r => r.id === id)) return  // dedup
     const item = { ...data, id, user_id: userRef.current?.id, created_at: data.created_at ?? now() }
     setRoasteries(prev => [...prev, item])
-    if (userRef.current && !data.imported)
+    if (!userRef.current) return
+    if (data.imported) {
+      // Followed item — write a pointer to the junction table
+      supabase.from('followed_roasteries')
+        .insert({ user_id: userRef.current.id, roastery_id: id, is_favorite: false })
+        .then(({ error }) => { if (error) setRoasteries(prev => prev.filter(r => r.id !== id)) })
+    } else {
       supabase.from('roasteries').insert(clean(item)).then(({ error }) => {
         if (error) setRoasteries(prev => prev.filter(r => r.id !== item.id))
       })
+    }
   }
   function updateRoastery(id, data) {
+    const item = rosteriesRef.current.find(r => r.id === id)
     setRoasteries(prev => prev.map(r => r.id === id ? { ...r, ...data } : r))
-    if (userRef.current) supabase.from('roasteries').update(clean(data)).eq('id', id).then()
+    if (!userRef.current) return
+    if (item?.imported) {
+      // Followed items are read-only; only persist is_favorite changes
+      if ('is_favorite' in data)
+        supabase.from('followed_roasteries')
+          .update({ is_favorite: data.is_favorite })
+          .eq('user_id', userRef.current.id).eq('roastery_id', id).then()
+    } else {
+      supabase.from('roasteries').update(clean(data)).eq('id', id).then()
+    }
   }
   function deleteRoastery(id) {
+    const item = rosteriesRef.current.find(r => r.id === id)
     setRoasteries(prev => prev.filter(r => r.id !== id))
-    if (userRef.current) supabase.from('roasteries').delete().eq('id', id).then()
+    if (!userRef.current) return
+    if (item?.imported) {
+      supabase.from('followed_roasteries').delete()
+        .eq('user_id', userRef.current.id).eq('roastery_id', id).then()
+    } else {
+      supabase.from('roasteries').delete().eq('id', id).then()
+    }
   }
 
   // ── Beans ────────────────────────────────────────────────────────────────
   function addBean(data) {
     const id = data.id ?? uid()
-    if (beansRef.current.some(b => b.id === id)) return  // dedup (clone/import)
+    if (beansRef.current.some(b => b.id === id)) return  // dedup
     const item = { ...data, id, user_id: userRef.current?.id, created_at: data.created_at ?? now() }
     setBeans(prev => [...prev, item])
-    if (userRef.current && !data.imported)
+    if (!userRef.current) return
+    if (data.imported) {
+      // Followed item — write a pointer to the junction table
+      supabase.from('followed_beans')
+        .insert({ user_id: userRef.current.id, bean_id: id, is_favorite: false })
+        .then(({ error }) => { if (error) setBeans(prev => prev.filter(b => b.id !== id)) })
+    } else {
       supabase.from('beans').insert(clean(item)).then(({ error }) => {
         if (error) setBeans(prev => prev.filter(b => b.id !== item.id))
       })
+    }
   }
   function updateBean(id, data) {
+    const item = beansRef.current.find(b => b.id === id)
     setBeans(prev => prev.map(b => b.id === id ? { ...b, ...data } : b))
-    if (userRef.current) supabase.from('beans').update(clean(data)).eq('id', id).then()
+    if (!userRef.current) return
+    if (item?.imported) {
+      // Followed items are read-only; only persist is_favorite changes
+      if ('is_favorite' in data)
+        supabase.from('followed_beans')
+          .update({ is_favorite: data.is_favorite })
+          .eq('user_id', userRef.current.id).eq('bean_id', id).then()
+    } else {
+      supabase.from('beans').update(clean(data)).eq('id', id).then()
+    }
   }
   function deleteBean(id) {
+    const item = beansRef.current.find(b => b.id === id)
     setBeans(prev => prev.filter(b => b.id !== id))
-    if (userRef.current) supabase.from('beans').delete().eq('id', id).then()
+    if (!userRef.current) return
+    if (item?.imported) {
+      supabase.from('followed_beans').delete()
+        .eq('user_id', userRef.current.id).eq('bean_id', id).then()
+    } else {
+      supabase.from('beans').delete().eq('id', id).then()
+    }
   }
 
   // ── Recipes ──────────────────────────────────────────────────────────────

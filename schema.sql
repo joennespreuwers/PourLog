@@ -147,3 +147,37 @@ create policy "Auth delete equipment" on equipment for delete using (auth.uid() 
 
 drop policy if exists "Auth upsert own profile" on profiles;
 create policy "Auth upsert own profile" on profiles for all using (auth.uid() = id) with check (auth.uid() = id);
+
+-- ─── Follow tables (persisted followed items from other users) ─────────────────
+
+create table if not exists followed_roasteries (
+  id          uuid        primary key default gen_random_uuid(),
+  user_id     uuid        not null references auth.users(id) on delete cascade,
+  roastery_id uuid        not null references roasteries(id) on delete cascade,
+  is_favorite boolean     not null default false,
+  created_at  timestamptz not null default now(),
+  unique (user_id, roastery_id)
+);
+
+create table if not exists followed_beans (
+  id          uuid        primary key default gen_random_uuid(),
+  user_id     uuid        not null references auth.users(id) on delete cascade,
+  bean_id     uuid        not null references beans(id) on delete cascade,
+  is_favorite boolean     not null default false,
+  created_at  timestamptz not null default now(),
+  unique (user_id, bean_id)
+);
+
+alter table followed_roasteries enable row level security;
+drop policy if exists "Users manage followed roasteries" on followed_roasteries;
+create policy "Users manage followed roasteries" on followed_roasteries
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter table followed_beans enable row level security;
+drop policy if exists "Users manage followed beans" on followed_beans;
+create policy "Users manage followed beans" on followed_beans
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- origin_id: tracks which item a clone was made from
+alter table roasteries add column if not exists origin_id uuid references roasteries(id) on delete set null;
+alter table beans      add column if not exists origin_id uuid references beans(id)      on delete set null;

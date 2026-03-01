@@ -122,7 +122,7 @@ export default function Beans({ beans, roasteries, onAdd, onUpdate, onDelete }) 
       // Store only label strings in the text[] column
       flavor_notes:    (form.flavor_notes ?? []).map(n => (typeof n === 'object' && n?.label) ? n.label : String(n)),
     }
-    editing ? onUpdate(editing.id, data) : onAdd(data)
+    editing ? onUpdate(editing.id, data) : onAdd(cloningImportedId ? { ...data, origin_id: cloningImportedId } : data)
     if (!editing && cloningImportedId) { onDelete(cloningImportedId); setCloningImportedId(null) }
     setDrawerOpen(false)
   }

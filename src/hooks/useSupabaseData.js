@@ -61,9 +61,11 @@ export function useSupabaseData(user) {
   // Stable refs for use inside callbacks
   const rosteriesRef = useRef([])
   const beansRef     = useRef([])
+  const recipesRef   = useRef([])
   const userRef      = useRef(user)
   useEffect(() => { rosteriesRef.current = roasteries }, [roasteries])
   useEffect(() => { beansRef.current     = beans },      [beans])
+  useEffect(() => { recipesRef.current   = recipes },    [recipes])
   useEffect(() => { userRef.current      = user },       [user])
 
   // ── Clear state on logout ─────────────────────────────────────────────────
@@ -89,13 +91,14 @@ export function useSupabaseData(user) {
     const userId = userRef.current.id
     try {
       // Fetch own data + follow relations in one round-trip
-      const [r, b, rec, eq, fr, fb] = await Promise.all([
+      const [r, b, rec, eq, fr, fb, frec] = await Promise.all([
         supabase.from('roasteries').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
         supabase.from('beans').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
         supabase.from('recipes').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
         supabase.from('equipment').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
         supabase.from('followed_roasteries').select('roastery_id, is_favorite').eq('user_id', userId),
         supabase.from('followed_beans').select('bean_id, is_favorite').eq('user_id', userId),
+        supabase.from('followed_recipes').select('recipe_id, is_favorite').eq('user_id', userId),
       ])
 
       if (r.error || b.error || rec.error) throw new Error('fetch failed')
@@ -110,7 +113,7 @@ export function useSupabaseData(user) {
       }
 
       // Fetch the actual followed items (public read, no user_id filter)
-      let followedR = [], followedB = []
+      let followedR = [], followedB = [], followedRec = []
       if (fr.data?.length) {
         const ids = fr.data.map(x => x.roastery_id)
         const { data } = await supabase.from('roasteries').select('*').in('id', ids)
@@ -127,10 +130,18 @@ export function useSupabaseData(user) {
           return { ...row, imported: true, is_favorite: rel?.is_favorite ?? false }
         })
       }
+      if (frec.data?.length) {
+        const ids = frec.data.map(x => x.recipe_id)
+        const { data } = await supabase.from('recipes').select('*').in('id', ids)
+        followedRec = (data ?? []).map(row => {
+          const rel = frec.data.find(x => x.recipe_id === row.id)
+          return { ...row, imported: true, is_favorite: rel?.is_favorite ?? false }
+        })
+      }
 
       setRoasteries([...(r.data ?? []), ...followedR])
       setBeans(     [...(b.data ?? []), ...followedB])
-      setRecipes(rec.data)
+      setRecipes(   [...(rec.data ?? []), ...followedRec])
       setEquipment(eqData)
       setSyncStatus('synced')
     } catch {
@@ -235,6 +246,18 @@ export function useSupabaseData(user) {
 
   // ── Recipes ──────────────────────────────────────────────────────────────
   function addRecipe(data) {
+    if (data.imported) {
+      // Followed recipe — keep original ID, write pointer to junction table
+      const id = data.id
+      if (!id || recipesRef.current.some(r => r.id === id)) return  // dedup
+      const item = { ...data, created_at: data.created_at ?? now() }
+      setRecipes(prev => [...prev, item])
+      if (userRef.current)
+        supabase.from('followed_recipes')
+          .insert({ user_id: userRef.current.id, recipe_id: id, is_favorite: false })
+          .then(({ error }) => { if (error) setRecipes(prev => prev.filter(r => r.id !== id)) })
+      return
+    }
     const item = { ...data, id: uid(), user_id: userRef.current?.id, created_at: now() }
     setRecipes(prev => [...prev, item])
     if (userRef.current)
@@ -243,12 +266,28 @@ export function useSupabaseData(user) {
       })
   }
   function updateRecipe(id, data) {
+    const item = recipesRef.current.find(r => r.id === id)
     setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...data } : r))
-    if (userRef.current) supabase.from('recipes').update(cleanRecipe(data)).eq('id', id).then()
+    if (!userRef.current) return
+    if (item?.imported) {
+      if ('is_favorite' in data)
+        supabase.from('followed_recipes')
+          .update({ is_favorite: data.is_favorite })
+          .eq('user_id', userRef.current.id).eq('recipe_id', id).then()
+    } else {
+      supabase.from('recipes').update(cleanRecipe(data)).eq('id', id).then()
+    }
   }
   function deleteRecipe(id) {
+    const item = recipesRef.current.find(r => r.id === id)
     setRecipes(prev => prev.filter(r => r.id !== id))
-    if (userRef.current) supabase.from('recipes').delete().eq('id', id).then()
+    if (!userRef.current) return
+    if (item?.imported) {
+      supabase.from('followed_recipes').delete()
+        .eq('user_id', userRef.current.id).eq('recipe_id', id).then()
+    } else {
+      supabase.from('recipes').delete().eq('id', id).then()
+    }
   }
 
   // ── Equipment ────────────────────────────────────────────────────────────

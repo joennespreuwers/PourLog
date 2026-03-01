@@ -129,9 +129,10 @@ function MainApp({
 
   useEffect(() => {
     const copyId    = searchParams.get('copy_recipe')
+    const followR   = searchParams.get('follow_recipe')
     const importR   = searchParams.get('import_roastery')
     const importB   = searchParams.get('import_bean')
-    if (!copyId && !importR && !importB) return
+    if (!copyId && !followR && !importR && !importB) return
     setSearchParams({}, { replace: true })
 
     import('./lib/supabase').then(({ supabase }) => {
@@ -139,6 +140,12 @@ function MainApp({
         handleTabChange('Recipes')
         supabase.from('recipes').select('*').eq('id', copyId).single().then(({ data }) => {
           if (data) setCopyRecipe(data)
+        })
+      }
+      if (followR) {
+        handleTabChange('Recipes')
+        supabase.from('recipes').select('*').eq('id', followR).single().then(({ data }) => {
+          if (data) addRecipe({ ...data, is_favorite: false, imported: true })
         })
       }
       if (importR) {

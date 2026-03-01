@@ -127,6 +127,13 @@ export default function ShareRecipe() {
         {/* Actions */}
         <div className="flex flex-col gap-3 pt-2">
           <Link
+            to={`/app?follow_recipe=${id}`}
+            className="w-full py-3 rounded-xl text-sm font-medium text-center block cursor-pointer hover:opacity-90"
+            style={{ backgroundColor: 'var(--color-roast)', color: 'var(--color-paper)' }}
+          >
+            + Add to my PourLog
+          </Link>
+          <Link
             to={`/app?copy_recipe=${id}`}
             className="w-full py-3 rounded-xl text-sm font-medium text-center block cursor-pointer hover:opacity-90"
             style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}

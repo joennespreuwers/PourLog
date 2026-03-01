@@ -48,6 +48,7 @@ const EMPTY = {
 export default function Recipes({ recipes, beans, roasteries = [], equipment = [], onAdd, onUpdate, onDelete, copyRecipe, onCopyConsumed }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [cloningImportedId, setCloningImportedId] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [detailId, setDetailId] = useState(null)
@@ -78,9 +79,10 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
   })
   const isFiltering = filterBean || filterRoastery || filterBrewer
 
-  function openAdd() { setEditing(null); setForm(EMPTY); setDrawerOpen(true) }
+  function openAdd() { setEditing(null); setCloningImportedId(null); setForm(EMPTY); setDrawerOpen(true) }
   function openCopy(r, techniqueOnly = false) {
     setEditing(null)
+    setCloningImportedId(null)
     setForm({
       title: `${r.title ?? 'Recipe'} (copy)`,
       bean_id: techniqueOnly ? '' : (r.bean_id ?? ''),
@@ -93,6 +95,25 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
       time_s: r.brew_time_sec != null ? String(r.brew_time_sec % 60).padStart(2, '0') : '',
       steps: r.steps ?? '',
       rating: techniqueOnly ? null : (r.rating ?? null), notes: r.notes ?? '',
+    })
+    setDetailId(null)
+    setDrawerOpen(true)
+  }
+  function openClone(r) {
+    setEditing(null)
+    setCloningImportedId(r.imported ? r.id : null)
+    setForm({
+      title: `${r.title ?? 'Recipe'} (clone)`,
+      bean_id: r.bean_id ?? '',
+      brewer_id: r.brewer_id ?? '', filter_id: r.filter_id ?? '',
+      dose_g: r.dose_g ?? '', yield_g: r.yield_g ?? '',
+      water_temp_c: r.water_temp_c ?? '',
+      grind_size: r.grind_size || r.grinder_setting || '',
+      grinder_id: r.grinder_id ?? '',
+      time_m: r.brew_time_sec != null ? String(Math.floor(r.brew_time_sec / 60)) : '',
+      time_s: r.brew_time_sec != null ? String(r.brew_time_sec % 60).padStart(2, '0') : '',
+      steps: r.steps ?? '',
+      rating: r.rating ?? null, notes: r.notes ?? '',
     })
     setDetailId(null)
     setDrawerOpen(true)
@@ -131,7 +152,8 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
         ? (Number(form.time_m || 0) * 60 + Number(form.time_s || 0)) || null
         : null,
     }
-    editing ? onUpdate(editing.id, data) : onAdd(data)
+    editing ? onUpdate(editing.id, data) : onAdd(cloningImportedId ? { ...data, origin_id: cloningImportedId } : data)
+    if (!editing && cloningImportedId) { onDelete(cloningImportedId); setCloningImportedId(null) }
     setDrawerOpen(false)
   }
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }))
@@ -187,7 +209,7 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredRecipes.map(r => (
-          <RecipeCard key={r.id} recipe={r} beanById={beanById} roasteryById={roasteryById} equipmentById={equipmentById} onView={() => setDetailId(r.id)} onEdit={() => openEdit(r)} onCopy={() => openCopy(r)} onDelete={() => setDeleteConfirm(r.id)} onFavorite={() => onUpdate(r.id, { is_favorite: !r.is_favorite })} />
+        <RecipeCard key={r.id} recipe={r} beanById={beanById} roasteryById={roasteryById} equipmentById={equipmentById} onView={() => setDetailId(r.id)} onEdit={() => openEdit(r)} onCopy={() => openCopy(r)} onClone={() => openClone(r)} onDelete={() => setDeleteConfirm(r.id)} onFavorite={() => onUpdate(r.id, { is_favorite: !r.is_favorite })} />
         ))}
       </div>
 
@@ -216,10 +238,20 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
         title={detailItem?.title ?? ''}
         footer={
           <div className="flex gap-2">
-            <button type="button" onClick={() => openEdit(detailItem)} className="flex-1 py-2 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }}>Edit</button>
-            <button type="button" onClick={() => openCopy(detailItem)} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Duplicate recipe"><Copy size={14} /> Copy</button>
-            <button type="button" onClick={() => setShareId(detailItem?.id)} className="py-2 px-3 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Share"><Share2 size={14} /></button>
-            <button type="button" onClick={() => { setDetailId(null); setDeleteConfirm(detailItem?.id) }} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid #fecaca', color: '#991b1b', backgroundColor: '#fff' }}>Delete</button>
+            {detailItem?.imported ? (
+              <>
+                <button type="button" onClick={() => { setDetailId(null); openClone(detailItem) }} className="flex-1 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center justify-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }}><Copy size={13} /> Clone</button>
+                <button type="button" onClick={() => setShareId(detailItem?.id)} className="py-2 px-3 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Share"><Share2 size={14} /></button>
+                <button type="button" onClick={() => { setDetailId(null); setDeleteConfirm(detailItem?.id) }} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid #fecaca', color: '#991b1b', backgroundColor: '#fff' }}>Remove</button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => openEdit(detailItem)} className="flex-1 py-2 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }}>Edit</button>
+                <button type="button" onClick={() => openCopy(detailItem)} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Duplicate recipe"><Copy size={14} /> Copy</button>
+                <button type="button" onClick={() => setShareId(detailItem?.id)} className="py-2 px-3 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Share"><Share2 size={14} /></button>
+                <button type="button" onClick={() => { setDetailId(null); setDeleteConfirm(detailItem?.id) }} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid #fecaca', color: '#991b1b', backgroundColor: '#fff' }}>Delete</button>
+              </>
+            )}
           </div>
         }
       >
@@ -234,7 +266,7 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
       )}
 
       {/* Edit / Add drawer */}
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? 'Edit recipe' : 'Add recipe'}>
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? 'Edit recipe' : cloningImportedId ? 'Clone recipe' : 'Add recipe'}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input label="Title" required value={form.title} onChange={set('title')} placeholder="Ethiopia V60 — fruity" maxLength={150} />
 
@@ -310,7 +342,7 @@ export default function Recipes({ recipes, beans, roasteries = [], equipment = [
   )
 }
 
-function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, onEdit, onCopy, onDelete, onFavorite }) {
+function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, onEdit, onCopy, onClone, onDelete, onFavorite }) {
   const [hovered, setHovered] = useState(false)
   const bean = beanById[r.bean_id]
   const roastery = bean ? roasteryById?.[bean.roastery_id] : null
@@ -329,9 +361,15 @@ function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, 
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     >
       <div className="absolute top-3 right-3 flex gap-1 transition-opacity" style={{ opacity: hovered ? 1 : 0 }}>
-        <ActionBtn onClick={onEdit} label="Edit"><Pencil size={13} /></ActionBtn>
-        <ActionBtn onClick={onCopy} label="Duplicate"><Copy size={13} /></ActionBtn>
-        <ActionBtn onClick={onDelete} label="Delete" danger><Trash2 size={13} /></ActionBtn>
+        {r.imported ? (
+          <ActionBtn onClick={onClone} label="Clone"><Copy size={13} /></ActionBtn>
+        ) : (
+          <>
+            <ActionBtn onClick={onEdit} label="Edit"><Pencil size={13} /></ActionBtn>
+            <ActionBtn onClick={onCopy} label="Duplicate"><Copy size={13} /></ActionBtn>
+          </>
+        )}
+        <ActionBtn onClick={onDelete} label={r.imported ? 'Remove' : 'Delete'} danger><Trash2 size={13} /></ActionBtn>
       </div>
       <button onClick={e => { e.stopPropagation(); onFavorite() }} className="absolute bottom-3 right-3 cursor-pointer" title={r.is_favorite ? 'Unfavourite' : 'Favourite'} style={{ background: 'none', border: 'none', padding: 0, opacity: r.is_favorite || hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
         <Heart size={14} fill={r.is_favorite ? 'currentColor' : 'none'} style={{ color: r.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
@@ -341,6 +379,7 @@ function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, 
         <div className="flex flex-wrap gap-1">
           {brewer && brewerColor && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: brewerColor.bg, color: brewerColor.text }}>{brewer.name}</span>}
           {filter && filterColor && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: filterColor.bg, color: filterColor.text }}>{filter.name}</span>}
+          {r.imported && <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#e0e7ff', color: '#3730a3' }}>Cloned</span>}
         </div>
         {r.rating && <StarRating value={r.rating} />}
       </div>

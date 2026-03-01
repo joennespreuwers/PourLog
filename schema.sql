@@ -181,3 +181,19 @@ create policy "Users manage followed beans" on followed_beans
 -- origin_id: tracks which item a clone was made from
 alter table roasteries add column if not exists origin_id uuid references roasteries(id) on delete set null;
 alter table beans      add column if not exists origin_id uuid references beans(id)      on delete set null;
+
+create table if not exists followed_recipes (
+  id          uuid        primary key default gen_random_uuid(),
+  user_id     uuid        not null references auth.users(id) on delete cascade,
+  recipe_id   uuid        not null references recipes(id) on delete cascade,
+  is_favorite boolean     not null default false,
+  created_at  timestamptz not null default now(),
+  unique (user_id, recipe_id)
+);
+
+alter table followed_recipes enable row level security;
+drop policy if exists "Users manage followed recipes" on followed_recipes;
+create policy "Users manage followed recipes" on followed_recipes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter table recipes add column if not exists origin_id uuid references recipes(id) on delete set null;

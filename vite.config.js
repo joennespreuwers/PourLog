@@ -2,10 +2,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
 
 const commitSha = (() => {
-  try { return execSync('git rev-parse --short HEAD').toString().trim() } catch { return 'dev' }
+  // Cloudflare Pages sets this automatically
+  if (process.env.CF_PAGES_COMMIT_SHA) return process.env.CF_PAGES_COMMIT_SHA.slice(0, 7)
+  // Local dev: read directly from .git without spawning a child process
+  try {
+    const head = readFileSync('.git/HEAD', 'utf-8').trim()
+    if (head.startsWith('ref: ')) {
+      return readFileSync(`.git/${head.slice(5)}`, 'utf-8').trim().slice(0, 7)
+    }
+    return head.slice(0, 7) // detached HEAD
+  } catch { return 'dev' }
 })()
 
 export default defineConfig({

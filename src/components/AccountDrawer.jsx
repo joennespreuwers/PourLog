@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 
 const SLUG_RE = /^[a-z0-9_-]{3,32}$/
 
-export default function AccountDrawer({ open, onClose, user, onUpdateProfile, onUpdatePassword, onSignOut, syncEnabled, onToggleSync }) {
+export default function AccountDrawer({ open, onClose, user, onUpdateProfile, onUpdatePassword, onSignOut }) {
   const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name ?? '')
   const [profileMsg, setProfileMsg]   = useState(null)
   const [profileSaving, setProfileSaving] = useState(false)
@@ -261,37 +261,6 @@ export default function AccountDrawer({ open, onClose, user, onUpdateProfile, on
               {passwordSaving ? 'Updating…' : 'Update password'}
             </button>
           </form>
-        </section>
-
-        <div style={{ borderTop: '1px solid var(--color-border)' }} />
-
-        {/* ── Sync ─────────────────────────────────────────────── */}
-        <section className="flex flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-stone)' }}>Cloud sync</p>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium" style={{ color: 'var(--color-espresso)' }}>
-                {syncEnabled ? 'Sync enabled' : 'Sync disabled'}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>
-                {syncEnabled ? 'Changes are saved to the cloud.' : 'All changes stay local only.'}
-              </p>
-            </div>
-            {/* Pill toggle */}
-            <button
-              type="button"
-              onClick={onToggleSync}
-              role="switch"
-              aria-checked={syncEnabled}
-              className="relative shrink-0 w-11 h-6 rounded-full cursor-pointer transition-colors"
-              style={{ backgroundColor: syncEnabled ? 'var(--color-roast)' : 'var(--color-border)' }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-                style={{ transform: syncEnabled ? 'translateX(20px)' : 'translateX(0)' }}
-              />
-            </button>
-          </div>
         </section>
 
         <div style={{ borderTop: '1px solid var(--color-border)' }} />

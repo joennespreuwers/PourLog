@@ -6,10 +6,11 @@ const TABS = ['Roasteries', 'Beans', 'Recipes']
 const isSettings = tab => tab === 'Equipment'
 
 const SYNC_DOT = {
-  local:    { color: 'var(--color-stone)',   title: 'Local only' },
-  disabled: { color: '#f59e0b',              title: 'Sync disabled' },
+  loading:  { color: 'var(--color-border)',  title: 'Loading…' },
+  local:    { color: 'var(--color-stone)',   title: 'Not signed in' },
   syncing:  { color: '#3b82f6',              title: 'Syncing…' },
   synced:   { color: '#a3e635',              title: 'Synced' },
+  offline:  { color: '#f59e0b',              title: 'Offline — showing cache' },
   error:    { color: '#ef4444',              title: 'Sync error' },
 }
 

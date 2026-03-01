@@ -43,7 +43,7 @@ export default function App() {
     beans,      addBean,      updateBean,      deleteBean,
     recipes,    addRecipe,    updateRecipe,    deleteRecipe,
     equipment,  addEquipment, updateEquipment, deleteEquipment,
-    syncStatus, syncEnabled, setSyncEnabled, pullAll,
+    syncStatus, pullAll,
   } = useSupabaseData(user)
 
   // ── Export / Import ────────────────────────────────────────────────────────
@@ -59,27 +59,16 @@ export default function App() {
   }
 
   async function handleImport(data) {
-    // Strip the local-only 'imported' flag so items are treated as own data after a full import
+    if (!user) { setAuthOpen(true); return }
     const stripImported = arr => arr?.map(({ imported: _i, ...rest }) => rest) ?? []
-
-    if (user) {
-      // Authenticated: upsert to Supabase then pull fresh state
-      const ups = []
-      if (data.roasteries?.length) ups.push(supabase.from('roasteries').upsert(stripImported(data.roasteries), { onConflict: 'id' }))
-      if (data.beans?.length)      ups.push(supabase.from('beans').upsert(stripImported(data.beans), { onConflict: 'id' }))
-      if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(stripImported(data.recipes), { onConflict: 'id' }))
-      const userEq = (data.equipment ?? []).filter(e => !e.id?.startsWith('default-'))
-      if (userEq.length)           ups.push(supabase.from('equipment').upsert(userEq, { onConflict: 'id' }))
-      await Promise.all(ups)
-      await pullAll()
-    } else {
-      // Unauthenticated: write directly to localStorage and reload
-      if (data.roasteries) window.localStorage.setItem('pourlog_roasteries', JSON.stringify(stripImported(data.roasteries)))
-      if (data.beans)      window.localStorage.setItem('pourlog_beans',      JSON.stringify(stripImported(data.beans)))
-      if (data.recipes)    window.localStorage.setItem('pourlog_recipes',    JSON.stringify(data.recipes))
-      if (data.equipment)  window.localStorage.setItem('pourlog_equipment',  JSON.stringify(data.equipment))
-      window.location.reload()
-    }
+    const ups = []
+    if (data.roasteries?.length) ups.push(supabase.from('roasteries').upsert(stripImported(data.roasteries), { onConflict: 'id' }))
+    if (data.beans?.length)      ups.push(supabase.from('beans').upsert(stripImported(data.beans), { onConflict: 'id' }))
+    if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(stripImported(data.recipes), { onConflict: 'id' }))
+    const userEq = (data.equipment ?? []).filter(e => !e.id?.startsWith('default-'))
+    if (userEq.length)           ups.push(supabase.from('equipment').upsert(userEq, { onConflict: 'id' }))
+    await Promise.all(ups)
+    await pullAll()
   }
 
   if (authLoading) return null // wait for auth state before rendering
@@ -105,7 +94,6 @@ export default function App() {
         syncStatus={syncStatus}
         signIn={signIn} signUp={signUp} signOut={signOut}
         updateProfile={updateProfile} updatePassword={updatePassword}
-        syncEnabled={syncEnabled} onToggleSync={() => setSyncEnabled(v => !v)}
         handleExport={handleExport} handleImport={handleImport}
       />} />
     </Routes>
@@ -120,7 +108,7 @@ function MainApp({
   recipes, addRecipe, updateRecipe, deleteRecipe,
   equipment, addEquipment, updateEquipment, deleteEquipment,
   syncStatus, signIn, signUp, signOut, updateProfile, updatePassword,
-  handleExport, handleImport, syncEnabled, onToggleSync,
+  handleExport, handleImport,
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [copyRecipe, setCopyRecipe] = useState(null)
@@ -210,8 +198,6 @@ function MainApp({
           onUpdateProfile={updateProfile}
           onUpdatePassword={updatePassword}
           onSignOut={signOut}
-          syncEnabled={syncEnabled}
-          onToggleSync={onToggleSync}
         />
       )}
     </>

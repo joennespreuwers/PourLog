@@ -193,7 +193,10 @@ drop policy if exists "Users manage followed recipes" on followed_recipes;
 create policy "Users manage followed recipes" on followed_recipes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-alter table recipes add column if not exists origin_id uuid references recipes(id) on delete set null;
+alter table recipes add column if not exists origin_id  uuid references recipes(id) on delete set null;
+alter table recipes add column if not exists brewer_id  uuid references equipment(id) on delete set null;
+alter table recipes add column if not exists grinder_id uuid references equipment(id) on delete set null;
+alter table recipes add column if not exists filter_id  text;
 
 -- ─── Purge rating columns (run to remove from existing tables) ───────────────
 alter table roasteries drop column if exists rating;

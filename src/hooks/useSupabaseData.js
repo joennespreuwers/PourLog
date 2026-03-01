@@ -19,7 +19,8 @@ function clean(obj) {
 const RECIPE_SB_KEYS = new Set([
   'id', 'user_id', 'title', 'bean_id', 'brew_method', 'filter_type',
   'dose_g', 'yield_g', 'water_temp_c', 'grind_size', 'brew_time_sec',
-  'steps', 'rating', 'notes', 'is_favorite', 'created_at',
+  'brewer_id', 'grinder_id', 'filter_id',
+  'steps', 'notes', 'is_favorite', 'created_at',
 ])
 function cleanRecipe(item) {
   return Object.fromEntries(Object.entries(clean(item)).filter(([k]) => RECIPE_SB_KEYS.has(k)))

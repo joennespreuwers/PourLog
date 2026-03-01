@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Routes, Route, useSearchParams } from 'react-router-dom'
 import Layout from './components/Layout'
 import Roasteries from './pages/Roasteries'
 import Beans from './pages/Beans'
@@ -6,26 +7,15 @@ import Recipes from './pages/Recipes'
 import Equipment from './pages/Equipment'
 import AuthModal from './components/AuthModal'
 import AccountDrawer from './components/AccountDrawer'
-import { useLocalStorage } from './hooks/useLocalStorage'
+import ShareRecipe from './pages/ShareRecipe'
+import ShareBean from './pages/ShareBean'
+import ShareRoastery from './pages/ShareRoastery'
+import ProfilePage from './pages/ProfilePage'
+import WelcomePage from './pages/WelcomePage'
+import HelpPage from './pages/HelpPage'
 import { useAuth } from './hooks/useAuth'
 import { useSupabaseData } from './hooks/useSupabaseData'
 import { supabase } from './lib/supabase'
-
-const DEFAULT_EQUIPMENT = [
-  // Brewers
-  { id: 'default-v60',        name: 'Hario V60',        category: 'brewer',       brand: 'Hario',     notes: '', created_at: '' },
-  { id: 'default-aeropress',  name: 'Aeropress',        category: 'brewer',       brand: 'Aeropress', notes: '', created_at: '' },
-  { id: 'default-chemex',     name: 'Chemex',           category: 'brewer',       brand: 'Chemex',    notes: '', created_at: '' },
-  { id: 'default-moka',       name: 'Moka Pot',         category: 'brewer',       brand: 'Bialetti',  notes: '', created_at: '' },
-  { id: 'default-frenchpress',name: 'French Press',     category: 'brewer',       brand: '',          notes: '', created_at: '' },
-  { id: 'default-espresso',   name: 'Espresso Machine', category: 'brewer',       brand: '',          notes: '', created_at: '' },
-  { id: 'default-kalita',     name: 'Kalita Wave',      category: 'brewer',       brand: 'Kalita',    notes: '', created_at: '' },
-  { id: 'default-clever',     name: 'Clever Dripper',   category: 'brewer',       brand: 'Clever',    notes: '', created_at: '' },
-  // Filter papers
-  { id: 'default-v60paper',   name: 'Hario V60 Paper',  category: 'filter_paper', brand: 'Hario',     notes: '', created_at: '' },
-  { id: 'default-aropaper',   name: 'Aeropress Paper',  category: 'filter_paper', brand: 'Aeropress', notes: '', created_at: '' },
-  { id: 'default-chemexpaper',name: 'Chemex Filter',    category: 'filter_paper', brand: 'Chemex',    notes: '', created_at: '' },
-]
 
 export default function App() {
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -47,19 +37,14 @@ export default function App() {
     setActiveTab(tab)
   }
 
-  // ── Cloud data (roasteries, beans, recipes) ───────────────────────────────
+  // ── All data (roasteries, beans, recipes, equipment) ─────────────────────
   const {
     roasteries, addRoastery, updateRoastery, deleteRoastery,
     beans,      addBean,      updateBean,      deleteBean,
     recipes,    addRecipe,    updateRecipe,    deleteRecipe,
-    syncStatus,
+    equipment,  addEquipment, updateEquipment, deleteEquipment,
+    syncStatus, syncEnabled, setSyncEnabled, pullAll,
   } = useSupabaseData(user)
-
-  // ── Equipment (localStorage-only) ─────────────────────────────────────────
-  const [equipment, setEquipment] = useLocalStorage('pourlog_equipment', DEFAULT_EQUIPMENT)
-  const addEquipment    = data     => setEquipment(prev => [...prev, { ...data, id: crypto.randomUUID(), created_at: new Date().toISOString() }])
-  const updateEquipment = (id, d)  => setEquipment(prev => prev.map(e => e.id === id ? { ...e, ...d } : e))
-  const deleteEquipment = id       => setEquipment(prev => prev.filter(e => e.id !== id))
 
   // ── Export / Import ────────────────────────────────────────────────────────
   function handleExport() {
@@ -74,27 +59,109 @@ export default function App() {
   }
 
   async function handleImport(data) {
-    // Import into Supabase if authenticated, otherwise localStorage only
+    // Strip the local-only 'imported' flag so items are treated as own data after a full import
+    const stripImported = arr => arr?.map(({ imported: _i, ...rest }) => rest) ?? []
+
     if (user) {
+      // Authenticated: upsert to Supabase then pull fresh state
       const ups = []
-      if (data.roasteries?.length) ups.push(supabase.from('roasteries').upsert(data.roasteries))
-      if (data.beans?.length)      ups.push(supabase.from('beans').upsert(data.beans))
-      if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(data.recipes))
+      if (data.roasteries?.length) ups.push(supabase.from('roasteries').upsert(stripImported(data.roasteries), { onConflict: 'id' }))
+      if (data.beans?.length)      ups.push(supabase.from('beans').upsert(stripImported(data.beans), { onConflict: 'id' }))
+      if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(stripImported(data.recipes), { onConflict: 'id' }))
+      const userEq = (data.equipment ?? []).filter(e => !e.id?.startsWith('default-'))
+      if (userEq.length)           ups.push(supabase.from('equipment').upsert(userEq, { onConflict: 'id' }))
       await Promise.all(ups)
-    }
-    // Always update local state immediately
-    if (data.roasteries) { /* handled by Supabase pull — trigger a re-fetch if authed */ }
-    if (data.equipment)  setEquipment(data.equipment)
-    // For local-only mode, write directly to localStorage state
-    if (!user) {
-      if (data.roasteries) window.localStorage.setItem('pourlog_roasteries', JSON.stringify(data.roasteries))
-      if (data.beans)      window.localStorage.setItem('pourlog_beans',      JSON.stringify(data.beans))
+      await pullAll()
+    } else {
+      // Unauthenticated: write directly to localStorage and reload
+      if (data.roasteries) window.localStorage.setItem('pourlog_roasteries', JSON.stringify(stripImported(data.roasteries)))
+      if (data.beans)      window.localStorage.setItem('pourlog_beans',      JSON.stringify(stripImported(data.beans)))
       if (data.recipes)    window.localStorage.setItem('pourlog_recipes',    JSON.stringify(data.recipes))
+      if (data.equipment)  window.localStorage.setItem('pourlog_equipment',  JSON.stringify(data.equipment))
       window.location.reload()
     }
   }
 
   if (authLoading) return null // wait for auth state before rendering
+
+  return (
+    <Routes>
+      <Route path="/welcome" element={<WelcomePage />} />
+      <Route path="/help"    element={<HelpPage />} />
+      <Route path="/share/recipe/:id" element={<ShareRecipe />} />
+      <Route path="/share/bean/:id"   element={<ShareBean />} />
+      <Route path="/share/roastery/:id" element={<ShareRoastery />} />
+      <Route path="/u/:handle" element={<ProfilePage />} />
+      <Route path="*" element={<MainApp
+        user={user} authLoading={authLoading}
+        authOpen={authOpen} setAuthOpen={setAuthOpen}
+        accountOpen={accountOpen} setAccountOpen={setAccountOpen}
+        activeTab={activeTab} handleTabChange={handleTabChange}
+        prevTab={prevTab}
+        roasteries={roasteries} addRoastery={addRoastery} updateRoastery={updateRoastery} deleteRoastery={deleteRoastery}
+        beans={beans} addBean={addBean} updateBean={updateBean} deleteBean={deleteBean}
+        recipes={recipes} addRecipe={addRecipe} updateRecipe={updateRecipe} deleteRecipe={deleteRecipe}
+        equipment={equipment} addEquipment={addEquipment} updateEquipment={updateEquipment} deleteEquipment={deleteEquipment}
+        syncStatus={syncStatus}
+        signIn={signIn} signUp={signUp} signOut={signOut}
+        updateProfile={updateProfile} updatePassword={updatePassword}
+        syncEnabled={syncEnabled} onToggleSync={() => setSyncEnabled(v => !v)}
+        handleExport={handleExport} handleImport={handleImport}
+      />} />
+    </Routes>
+  )
+}
+
+function MainApp({
+  user, authOpen, setAuthOpen, accountOpen, setAccountOpen,
+  activeTab, handleTabChange, prevTab,
+  roasteries, addRoastery, updateRoastery, deleteRoastery,
+  beans, addBean, updateBean, deleteBean,
+  recipes, addRecipe, updateRecipe, deleteRecipe,
+  equipment, addEquipment, updateEquipment, deleteEquipment,
+  syncStatus, signIn, signUp, signOut, updateProfile, updatePassword,
+  handleExport, handleImport, syncEnabled, onToggleSync,
+}) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [copyRecipe, setCopyRecipe] = useState(null)
+
+  useEffect(() => {
+    document.title = activeTab === 'Roasteries' ? 'Roasteries | Pourlog'
+      : activeTab === 'Beans'      ? 'Beans | Pourlog'
+      : activeTab === 'Recipes'    ? 'Recipes | Pourlog'
+      : activeTab === 'Equipment'  ? 'Equipment | Pourlog'
+      : 'Pourlog'
+  }, [activeTab])
+
+  useEffect(() => {
+    const copyId    = searchParams.get('copy_recipe')
+    const importR   = searchParams.get('import_roastery')
+    const importB   = searchParams.get('import_bean')
+    if (!copyId && !importR && !importB) return
+    setSearchParams({}, { replace: true })
+
+    import('./lib/supabase').then(({ supabase }) => {
+      if (copyId) {
+        handleTabChange('Recipes')
+        supabase.from('recipes').select('*').eq('id', copyId).single().then(({ data }) => {
+          if (data) setCopyRecipe(data)
+        })
+      }
+      if (importR) {
+        handleTabChange('Roasteries')
+        supabase.from('roasteries').select('*').eq('id', importR).single().then(({ data }) => {
+          if (data) addRoastery({ ...data, is_favorite: false, imported: true })
+        })
+      }
+      if (importB) {
+        handleTabChange('Beans')
+        supabase.from('beans').select('*').eq('id', importB).single().then(({ data }) => {
+          if (data) addBean({ ...data, is_favorite: false, imported: true })
+        })
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
@@ -115,7 +182,7 @@ export default function App() {
           <Beans beans={beans} roasteries={roasteries} onAdd={addBean} onUpdate={updateBean} onDelete={deleteBean} />
         )}
         {activeTab === 'Recipes' && (
-          <Recipes recipes={recipes} beans={beans} equipment={equipment} onAdd={addRecipe} onUpdate={updateRecipe} onDelete={deleteRecipe} />
+          <Recipes recipes={recipes} beans={beans} roasteries={roasteries} equipment={equipment} onAdd={addRecipe} onUpdate={updateRecipe} onDelete={deleteRecipe} copyRecipe={copyRecipe} onCopyConsumed={() => setCopyRecipe(null)} />
         )}
         {activeTab === 'Equipment' && (
           <Equipment
@@ -143,6 +210,8 @@ export default function App() {
           onUpdateProfile={updateProfile}
           onUpdatePassword={updatePassword}
           onSignOut={signOut}
+          syncEnabled={syncEnabled}
+          onToggleSync={onToggleSync}
         />
       )}
     </>

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Pencil, Trash2, Copy } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Pencil, Trash2, Copy, Share2, Heart } from 'lucide-react'
 import StarRating from '../components/StarRating'
 import StarPicker from '../components/StarPicker'
 import Drawer from '../components/Drawer'
@@ -7,6 +7,7 @@ import DetailPage from '../components/DetailPage'
 import { Input, Textarea, Select, FieldRow, FieldSection } from '../components/FormFields'
 import { ActionBtn, DeleteConfirm, FormActions } from './Roasteries'
 import EmptyState from '../components/EmptyState'
+import SharePopup from '../components/SharePopup'
 
 // Deterministic badge color per equipment ID, prefers item.color if stored
 function equipmentColor(id, item) {
@@ -44,26 +45,45 @@ const EMPTY = {
   time_m: '', time_s: '', steps: '', rating: null, notes: '',
 }
 
-export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdate, onDelete }) {
+export default function Recipes({ recipes, beans, roasteries = [], equipment = [], onAdd, onUpdate, onDelete, copyRecipe, onCopyConsumed }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [detailId, setDetailId] = useState(null)
   const detailItem = detailId ? (recipes.find(r => r.id === detailId) ?? null) : null
+  const [shareId, setShareId] = useState(null)
 
   const beanById = Object.fromEntries(beans.map(b => [b.id, b]))
+  const roasteryById = Object.fromEntries(roasteries.map(r => [r.id, r]))
   const equipmentById = Object.fromEntries(equipment.map(e => [e.id, e]))
   const grinders = equipment.filter(e => e.category === 'grinder')
   const filterPapers = equipment.filter(e => e.category === 'filter_paper')
   const brewers = equipment.filter(e => e.category === 'brewer')
 
+  const [filterBean, setFilterBean] = useState('')
+  const [filterRoastery, setFilterRoastery] = useState('')
+  const [filterBrewer, setFilterBrewer] = useState('')
+  const usedBeans = beans.filter(b => recipes.some(r => r.bean_id === b.id))
+  const usedRoasteries = roasteries.filter(ro => usedBeans.some(b => b.roastery_id === ro.id))
+  const usedBrewers = brewers.filter(br => recipes.some(r => r.brewer_id === br.id))
+  const filteredRecipes = recipes.filter(r => {
+    if (filterBean && r.bean_id !== filterBean) return false
+    if (filterRoastery) {
+      const bean = beanById[r.bean_id]
+      if (!bean || bean.roastery_id !== filterRoastery) return false
+    }
+    if (filterBrewer && r.brewer_id !== filterBrewer) return false
+    return true
+  })
+  const isFiltering = filterBean || filterRoastery || filterBrewer
+
   function openAdd() { setEditing(null); setForm(EMPTY); setDrawerOpen(true) }
-  function openCopy(r) {
+  function openCopy(r, techniqueOnly = false) {
     setEditing(null)
     setForm({
       title: `${r.title ?? 'Recipe'} (copy)`,
-      bean_id: r.bean_id ?? '',
+      bean_id: techniqueOnly ? '' : (r.bean_id ?? ''),
       brewer_id: r.brewer_id ?? '', filter_id: r.filter_id ?? '',
       dose_g: r.dose_g ?? '', yield_g: r.yield_g ?? '',
       water_temp_c: r.water_temp_c ?? '',
@@ -72,7 +92,7 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
       time_m: r.brew_time_sec != null ? String(Math.floor(r.brew_time_sec / 60)) : '',
       time_s: r.brew_time_sec != null ? String(r.brew_time_sec % 60).padStart(2, '0') : '',
       steps: r.steps ?? '',
-      rating: r.rating ?? null, notes: r.notes ?? '',
+      rating: techniqueOnly ? null : (r.rating ?? null), notes: r.notes ?? '',
     })
     setDetailId(null)
     setDrawerOpen(true)
@@ -95,8 +115,15 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
   }
   function handleSubmit(e) {
     e.preventDefault()
+    const brewer = equipmentById[form.brewer_id]
+    const filterItem = form.filter_id === 'metal' ? { name: 'Metal' }
+      : form.filter_id === 'none' ? { name: 'None' }
+      : form.filter_id ? equipmentById[form.filter_id]
+      : null
     const data = {
       ...form,
+      brew_method: brewer?.name ?? '',              // derive text name for Supabase
+      filter_type: filterItem?.name ?? '',
       dose_g: form.dose_g ? Number(form.dose_g) : null,
       yield_g: form.yield_g ? Number(form.yield_g) : null,
       water_temp_c: form.water_temp_c ? Number(form.water_temp_c) : null,
@@ -109,21 +136,58 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
   }
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }))
 
+  // Auto-open copy drawer when arriving from a shared recipe link
+  useEffect(() => {
+    if (copyRecipe) {
+      openCopy(copyRecipe, true) // technique only — no bean, no rating
+      onCopyConsumed?.()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [copyRecipe])
+
   return (
     <div>
       <div className="flex items-end justify-between mb-8">
         <div>
           <h1 className="font-serif text-3xl font-medium mb-1" style={{ color: 'var(--color-espresso)' }}>Recipes</h1>
-          <p className="text-sm" style={{ color: 'var(--color-stone)' }}>{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}</p>
+          <p className="text-sm" style={{ color: 'var(--color-stone)' }}>
+            {isFiltering ? `${filteredRecipes.length} of ${recipes.length}` : recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
+          </p>
         </div>
         <button onClick={openAdd} className="px-4 py-2 rounded-md text-sm font-medium cursor-pointer hover:opacity-80" style={{ backgroundColor: 'var(--color-espresso)', color: 'var(--color-paper)' }}>
           + Add recipe
         </button>
       </div>
 
+      {recipes.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {usedRoasteries.length > 0 && (
+            <select value={filterRoastery} onChange={e => { setFilterRoastery(e.target.value); setFilterBean('') }} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', backgroundColor: '#fff', color: 'var(--color-espresso)' }}>
+              <option value="">All roasteries</option>
+              {usedRoasteries.map(ro => <option key={ro.id} value={ro.id}>{ro.name}</option>)}
+            </select>
+          )}
+          {usedBeans.length > 0 && (
+            <select value={filterBean} onChange={e => { setFilterBean(e.target.value); setFilterRoastery('') }} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', backgroundColor: '#fff', color: 'var(--color-espresso)' }}>
+              <option value="">All beans</option>
+              {(filterRoastery ? usedBeans.filter(b => b.roastery_id === filterRoastery) : usedBeans).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          )}
+          {usedBrewers.length > 0 && (
+            <select value={filterBrewer} onChange={e => setFilterBrewer(e.target.value)} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', backgroundColor: '#fff', color: 'var(--color-espresso)' }}>
+              <option value="">All brewers</option>
+              {usedBrewers.map(br => <option key={br.id} value={br.id}>{br.name}</option>)}
+            </select>
+          )}
+          {isFiltering && (
+            <button onClick={() => { setFilterBean(''); setFilterRoastery(''); setFilterBrewer('') }} className="px-3 py-1.5 text-sm rounded-lg cursor-pointer" style={{ border: '1px solid var(--color-border)', color: 'var(--color-stone)', backgroundColor: '#fff' }}>Clear</button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {recipes.map(r => (
-          <RecipeCard key={r.id} recipe={r} beanById={beanById} equipmentById={equipmentById} onView={() => setDetailId(r.id)} onEdit={() => openEdit(r)} onCopy={() => openCopy(r)} onDelete={() => setDeleteConfirm(r.id)} />
+        {filteredRecipes.map(r => (
+          <RecipeCard key={r.id} recipe={r} beanById={beanById} roasteryById={roasteryById} equipmentById={equipmentById} onView={() => setDetailId(r.id)} onEdit={() => openEdit(r)} onCopy={() => openCopy(r)} onDelete={() => setDeleteConfirm(r.id)} onFavorite={() => onUpdate(r.id, { is_favorite: !r.is_favorite })} />
         ))}
       </div>
 
@@ -135,6 +199,9 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
           action="+ Add your first recipe"
           onAction={openAdd}
         />
+      )}
+      {recipes.length > 0 && filteredRecipes.length === 0 && (
+        <p className="text-sm py-8 text-center" style={{ color: 'var(--color-stone)' }}>No recipes match your filters.</p>
       )}
 
       {deleteConfirm && (
@@ -151,17 +218,25 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
           <div className="flex gap-2">
             <button type="button" onClick={() => openEdit(detailItem)} className="flex-1 py-2 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }}>Edit</button>
             <button type="button" onClick={() => openCopy(detailItem)} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Duplicate recipe"><Copy size={14} /> Copy</button>
+            <button type="button" onClick={() => setShareId(detailItem?.id)} className="py-2 px-3 rounded-md text-sm font-medium cursor-pointer flex items-center gap-1.5" style={{ border: '1px solid var(--color-border)', color: 'var(--color-espresso)', backgroundColor: '#fff' }} title="Share"><Share2 size={14} /></button>
             <button type="button" onClick={() => { setDetailId(null); setDeleteConfirm(detailItem?.id) }} className="py-2 px-4 rounded-md text-sm font-medium cursor-pointer" style={{ border: '1px solid #fecaca', color: '#991b1b', backgroundColor: '#fff' }}>Delete</button>
           </div>
         }
       >
-        {detailItem && <RecipeDetail recipe={detailItem} beanById={beanById} equipmentById={equipmentById} />}
+        {detailItem && <RecipeDetail recipe={detailItem} beanById={beanById} roasteryById={roasteryById} equipmentById={equipmentById} />}
       </DetailPage>
+
+      {shareId && (
+        <SharePopup
+          url={`${window.location.origin}/share/recipe/${shareId}`}
+          onClose={() => setShareId(null)}
+        />
+      )}
 
       {/* Edit / Add drawer */}
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={editing ? 'Edit recipe' : 'Add recipe'}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input label="Title" required value={form.title} onChange={set('title')} placeholder="Ethiopia V60 — fruity" />
+          <Input label="Title" required value={form.title} onChange={set('title')} placeholder="Ethiopia V60 — fruity" maxLength={150} />
 
           <Select label="Bean" value={form.bean_id} onChange={set('bean_id')}>
             <option value="">— None —</option>
@@ -186,7 +261,7 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
               <option value="">— None —</option>
               {grinders.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </Select>
-            <Input label="Grind" value={form.grind_size} onChange={set('grind_size')} placeholder="medium-fine, 20 clicks…" />
+            <Input label="Grind" value={form.grind_size} onChange={set('grind_size')} placeholder="medium-fine, 20 clicks…" maxLength={80} />
           </FieldRow>
 
           <FieldSection title="Parameters" />
@@ -225,8 +300,8 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
             </div>
           </FieldRow>
           <FieldSection title="Instructions" />
-          <Textarea label="Step-by-step" rows={5} value={form.steps} onChange={set('steps')} placeholder={"1. Bloom 30g, 45s\n2. Pour to 125g at 1:00\n…"} />
-          <Textarea label="Notes" rows={2} value={form.notes} onChange={set('notes')} placeholder="What worked, what to tweak…" />
+          <Textarea label="Step-by-step" rows={5} value={form.steps} onChange={set('steps')} placeholder={"1. Bloom 30g, 45s\n2. Pour to 125g at 1:00\n…"} maxLength={2000} />
+          <Textarea label="Notes" rows={2} value={form.notes} onChange={set('notes')} placeholder="What worked, what to tweak…" maxLength={500} />
           <StarPicker label="Rating" value={form.rating} onChange={v => setForm(p => ({ ...p, rating: v }))} />
           <FormActions editing={!!editing} label="recipe" onCancel={() => setDrawerOpen(false)} />
         </form>
@@ -235,9 +310,10 @@ export default function Recipes({ recipes, beans, equipment = [], onAdd, onUpdat
   )
 }
 
-function RecipeCard({ recipe: r, beanById, equipmentById, onView, onEdit, onCopy, onDelete }) {
+function RecipeCard({ recipe: r, beanById, roasteryById, equipmentById, onView, onEdit, onCopy, onDelete, onFavorite }) {
   const [hovered, setHovered] = useState(false)
   const bean = beanById[r.bean_id]
+  const roastery = bean ? roasteryById?.[bean.roastery_id] : null
   const grinder = equipmentById?.[r.grinder_id]
   const brewer = equipmentById?.[r.brewer_id]
   const filter = r.filter_id === 'metal' ? { name: 'Metal filter' } : r.filter_id === 'none' ? null : equipmentById?.[r.filter_id]
@@ -257,6 +333,9 @@ function RecipeCard({ recipe: r, beanById, equipmentById, onView, onEdit, onCopy
         <ActionBtn onClick={onCopy} label="Duplicate"><Copy size={13} /></ActionBtn>
         <ActionBtn onClick={onDelete} label="Delete" danger><Trash2 size={13} /></ActionBtn>
       </div>
+      <button onClick={e => { e.stopPropagation(); onFavorite() }} className="absolute bottom-3 right-3 cursor-pointer" title={r.is_favorite ? 'Unfavourite' : 'Favourite'} style={{ background: 'none', border: 'none', padding: 0, opacity: r.is_favorite || hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
+        <Heart size={14} fill={r.is_favorite ? 'currentColor' : 'none'} style={{ color: r.is_favorite ? '#b91c1c' : 'var(--color-stone)' }} />
+      </button>
 
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap gap-1">
@@ -268,7 +347,7 @@ function RecipeCard({ recipe: r, beanById, equipmentById, onView, onEdit, onCopy
 
       <div>
         <h2 className="font-serif text-xl font-medium leading-tight" style={{ color: 'var(--color-espresso)' }}>{r.title}</h2>
-        {bean && <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>{bean.name}</p>}
+        {bean && <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>{bean.name}{roastery ? <span> · {roastery.name}</span> : ''}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs rounded-lg p-3" style={{ backgroundColor: 'var(--color-cream)' }}>
@@ -306,8 +385,9 @@ function RecipeCard({ recipe: r, beanById, equipmentById, onView, onEdit, onCopy
     </article>
   )
 }
-function RecipeDetail({ recipe: r, beanById, equipmentById }) {
+function RecipeDetail({ recipe: r, beanById, roasteryById, equipmentById }) {
   const bean = beanById[r.bean_id]
+  const roastery = bean ? roasteryById?.[bean.roastery_id] : null
   const grinder = equipmentById?.[r.grinder_id]
   const brewer = equipmentById?.[r.brewer_id]
   const filter = r.filter_id === 'metal' ? { name: 'Metal filter' } : r.filter_id === 'none' ? null : equipmentById?.[r.filter_id]
@@ -330,6 +410,7 @@ function RecipeDetail({ recipe: r, beanById, equipmentById }) {
         <div>
           <p className="text-xs font-medium uppercase tracking-wide mb-0.5" style={{ color: 'var(--color-stone)' }}>Bean</p>
           <p className="text-sm font-medium" style={{ color: 'var(--color-espresso)' }}>{bean.name}</p>
+          {roastery && <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>{roastery.name}{roastery.country ? ` · ${roastery.country}` : ''}</p>}
         </div>
       )}
 

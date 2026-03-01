@@ -1,4 +1,5 @@
 import { Settings, ChevronLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const TABS = ['Roasteries', 'Beans', 'Recipes']
 
@@ -6,14 +7,15 @@ const isSettings = tab => tab === 'Equipment'
 
 const SYNC_DOT = {
   local:    { color: 'var(--color-stone)',   title: 'Local only' },
-  syncing:  { color: '#f59e0b',              title: 'Syncing…' },
+  disabled: { color: '#f59e0b',              title: 'Sync disabled' },
+  syncing:  { color: '#3b82f6',              title: 'Syncing…' },
   synced:   { color: '#22c55e',              title: 'Synced' },
   error:    { color: '#ef4444',              title: 'Sync error' },
 }
 
 export default function Layout({ activeTab, onTabChange, onBack, user, syncStatus = 'local', onAuthOpen, onAccountOpen, onSignOut, children }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-paper)' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-paper)' }}>
       <header
         className="sticky top-0 z-10 border-b"
         style={{
@@ -38,12 +40,9 @@ export default function Layout({ activeTab, onTabChange, onBack, user, syncStatu
             </button>
           )}
           {/* Wordmark */}
-          <span
-            className="font-serif text-lg font-medium tracking-tight select-none"
-            style={{ color: 'var(--color-espresso)' }}
-          >
+          <Link to="/welcome" className="font-serif text-lg font-medium tracking-tight select-none" style={{ color: 'var(--color-espresso)' }}>
             Pourlog
-          </span>
+          </Link>
 
           {/* Nav tabs — centred, hidden on mobile */}
           <nav className="hidden sm:flex gap-0.5 mx-auto">
@@ -139,9 +138,23 @@ export default function Layout({ activeTab, onTabChange, onBack, user, syncStatu
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 pb-24 sm:pb-10">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 pb-24 sm:pb-10">
         {children}
       </main>
+
+      {/* Footer — hidden on mobile (covered by bottom tab bar) */}
+      <footer className="hidden sm:block border-t mt-auto" style={{ borderColor: 'var(--color-border)' }}>
+        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
+          <div>
+            <span className="font-serif text-sm" style={{ color: 'var(--color-espresso)' }}>Pourlog</span>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-stone)' }}>© 2026 <a href="https://joennespreuwers.be" target="_blank" rel="noopener noreferrer" className="hover:underline">Joenne Spreuwers</a> · Made with (too much) caffeine ☕</p>
+          </div>
+          <nav className="flex items-center gap-5 text-xs" style={{ color: 'var(--color-stone)' }}>
+            <Link to="/welcome" className="hover:underline">About</Link>
+            <Link to="/help" className="hover:underline">Help</Link>
+          </nav>
+        </div>
+      </footer>
 
       {/* Mobile bottom tab bar — hidden on Equipment/settings */}
       <nav

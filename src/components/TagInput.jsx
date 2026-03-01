@@ -2,38 +2,50 @@ import { useState, useRef, useEffect } from 'react'
 import { Label } from './FormFields'
 
 export const TAG_PALETTE = [
-  { bg: '#fce7f3', text: '#9d174d' }, // berry pink
-  { bg: '#fee2e2', text: '#991b1b' }, // stone fruit red
-  { bg: '#ffedd5', text: '#9a3412' }, // tropical orange
-  { bg: '#fef9c3', text: '#854d0e' }, // citrus yellow
-  { bg: '#fef3c7', text: '#92400e' }, // amber / dried fruit
-  { bg: '#fdf4ff', text: '#7e22ce' }, // floral violet
-  { bg: '#ede9fe', text: '#5b21b6' }, // purple / fermented
-  { bg: '#dbeafe', text: '#1e40af' }, // blue / washed
-  { bg: '#d1fae5', text: '#065f46' }, // green / herbal
-  { bg: '#ecfdf5', text: '#166534' }, // teal / clean
-  { bg: '#e7e0d8', text: '#3b1a0a' }, // roasted brown
-  { bg: '#f5f0eb', text: '#5c3d2e' }, // nutty neutral
+  { bg: '#fce7f3', text: '#9d174d' }, // 0  berry pink
+  { bg: '#fee2e2', text: '#991b1b' }, // 1  stone fruit red
+  { bg: '#ffedd5', text: '#9a3412' }, // 2  tropical / spice orange
+  { bg: '#fef9c3', text: '#854d0e' }, // 3  citrus yellow
+  { bg: '#fef3c7', text: '#92400e' }, // 4  amber / dried fruit / sweet
+  { bg: '#fdf4ff', text: '#7e22ce' }, // 5  floral violet
+  { bg: '#ede9fe', text: '#5b21b6' }, // 6  fermented purple
+  { bg: '#dbeafe', text: '#1e40af' }, // 7  blue
+  { bg: '#d1fae5', text: '#065f46' }, // 8  green / herbal
+  { bg: '#ecfdf5', text: '#166534' }, // 9  teal
+  { bg: '#e7e0d8', text: '#3b1a0a' }, // 10 roasted brown
+  { bg: '#f5f0eb', text: '#5c3d2e' }, // 11 nutty neutral / other
+  { bg: '#fef08a', text: '#713f12' }, // 12 sour / acid yellow
+  { bg: '#bbf7d0', text: '#14532d' }, // 13 green / vegetative
 ]
 
 const SCA_FLAVORS = [
-  { category: 'Berry',      color: TAG_PALETTE[0],  notes: ['blueberry', 'raspberry', 'strawberry', 'blackberry', 'blackcurrant', 'cranberry', 'pomegranate'] },
-  { category: 'Stone',      color: TAG_PALETTE[1],  notes: ['cherry', 'peach', 'apricot', 'plum', 'nectarine'] },
-  { category: 'Tropical',   color: TAG_PALETTE[2],  notes: ['mango', 'pineapple', 'passion fruit', 'papaya', 'guava', 'lychee', 'banana', 'coconut'] },
-  { category: 'Other Fruit',color: TAG_PALETTE[9],  notes: ['apple', 'pear', 'grape', 'peach', 'melon'] },
-  { category: 'Citrus',     color: TAG_PALETTE[3],  notes: ['lemon', 'lime', 'orange', 'grapefruit', 'bergamot', 'yuzu', 'mandarin'] },
-  { category: 'Dried',      color: TAG_PALETTE[4],  notes: ['raisin', 'prune', 'fig', 'date', 'tamarind'] },
-  { category: 'Fermented',  color: TAG_PALETTE[6],  notes: ['winey', 'whiskey', 'fermented', 'overripe', 'wine', 'boozy'] },
-  { category: 'Floral',     color: TAG_PALETTE[5],  notes: ['jasmine', 'rose', 'chamomile', 'elderflower', 'orange blossom', 'lavender', 'hibiscus'] },
-  { category: 'Spices',     color: TAG_PALETTE[8],  notes: ['cinnamon', 'clove', 'black pepper', 'anise', 'nutmeg', 'cardamom', 'ginger'] },
-  { category: 'Sweet',      color: TAG_PALETTE[4],  notes: ['caramel', 'brown sugar', 'honey', 'maple', 'vanilla', 'molasses', 'toffee', 'butterscotch'] },
-  { category: 'Nutty',      color: TAG_PALETTE[11], notes: ['hazelnut', 'almond', 'peanut', 'walnut', 'pecan', 'macadamia'] },
-  { category: 'Cocoa',      color: TAG_PALETTE[10], notes: ['dark chocolate', 'milk chocolate', 'cocoa', 'bittersweet', 'cacao'] },
-  { category: 'Roasted',    color: TAG_PALETTE[10], notes: ['tobacco', 'smoky', 'ashy', 'malt', 'cereal', 'toasted', 'burnt sugar', 'cedar'] },
+  // ── Fruity ──────────────────────────────────────────────────────────────────
+  { category: 'Berry',        color: TAG_PALETTE[0],  notes: ['blackberry', 'raspberry', 'blueberry', 'strawberry'] },
+  { category: 'Dried Fruit',  color: TAG_PALETTE[4],  notes: ['raisin', 'prune'] },
+  { category: 'Other Fruit',  color: TAG_PALETTE[2],  notes: ['coconut', 'cherry', 'pomegranate', 'pineapple', 'grape', 'apple', 'peach', 'pear'] },
+  { category: 'Citrus',       color: TAG_PALETTE[3],  notes: ['grapefruit', 'orange', 'lemon', 'lime'] },
+  // ── Floral ──────────────────────────────────────────────────────────────────
+  { category: 'Floral',       color: TAG_PALETTE[5],  notes: ['black tea', 'floral', 'chamomile', 'rose', 'jasmine'] },
+  // ── Sweet ───────────────────────────────────────────────────────────────────
+  { category: 'Sweet',        color: TAG_PALETTE[4],  notes: ['molasses', 'maple syrup', 'caramelized', 'honey', 'overall sweet', 'vanilla', 'vanillin'] },
+  // ── Nutty / Cocoa ────────────────────────────────────────────────────────────
+  { category: 'Nutty',        color: TAG_PALETTE[11], notes: ['peanuts', 'hazelnut', 'almond'] },
+  { category: 'Cocoa',        color: TAG_PALETTE[10], notes: ['chocolate', 'dark chocolate'] },
+  // ── Spices ──────────────────────────────────────────────────────────────────
+  { category: 'Spices',       color: TAG_PALETTE[2],  notes: ['anise', 'pepper', 'clove', 'cinnamon', 'nutmeg'] },
+  // ── Roasted ─────────────────────────────────────────────────────────────────
+  { category: 'Roasted',      color: TAG_PALETTE[10], notes: ['malt', 'grain', 'acrid', 'ashy', 'smoky', 'brown roast', 'tobacco'] },
+  // ── Sour / Fermented ─────────────────────────────────────────────────────────
+  { category: 'Sour',         color: TAG_PALETTE[12], notes: ['sour aromatics', 'acetic acid', 'butyric acid', 'isovaleric acid', 'citric acid', 'malic acid'] },
+  { category: 'Fermented',    color: TAG_PALETTE[6],  notes: ['winey', 'whiskey', 'fermented', 'overripe'] },
+  // ── Green / Vegetative ───────────────────────────────────────────────────────
+  { category: 'Green',        color: TAG_PALETTE[13], notes: ['olive oil', 'raw', 'under-ripe', 'peapod', 'fresh', 'dark green', 'vegetative', 'hay-like', 'herb-like', 'beany'] },
+  // ── Other ───────────────────────────────────────────────────────────────────
+  { category: 'Other',        color: TAG_PALETTE[11], notes: ['stale', 'cardboard', 'papery', 'woody', 'moldy / damp', 'musty / dusty', 'musty / earthy', 'animalic', 'meaty / brothy', 'phenolic', 'bitter', 'salty', 'medicinal', 'petroleum', 'skunky', 'rubber'] },
 ]
 
 // Flat lookup of all SCA notes → their color
-const SCA_FLAT = SCA_FLAVORS.flatMap(cat => cat.notes.map(note => ({ label: note, color: cat.color })))
+export const SCA_FLAT = SCA_FLAVORS.flatMap(cat => cat.notes.map(note => ({ label: note, color: cat.color })))
 
 // Accepts string[] (legacy) or { label, color }[] — normalises internally
 function normalise(items) {

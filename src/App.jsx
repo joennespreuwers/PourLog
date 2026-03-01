@@ -144,8 +144,20 @@ function MainApp({
       }
       if (followR) {
         handleTabChange('Recipes')
-        supabase.from('recipes').select('*').eq('id', followR).single().then(({ data }) => {
-          if (data) addRecipe({ ...data, is_favorite: false, imported: true })
+        supabase.from('recipes').select('*').eq('id', followR).single().then(async ({ data: recipe }) => {
+          if (!recipe) return
+          // Auto-follow the linked bean + its roastery so names show up
+          if (recipe.bean_id) {
+            const { data: bean } = await supabase.from('beans').select('*').eq('id', recipe.bean_id).single()
+            if (bean) {
+              if (bean.roastery_id) {
+                const { data: roastery } = await supabase.from('roasteries').select('*').eq('id', bean.roastery_id).single()
+                if (roastery) addRoastery({ ...roastery, is_favorite: false, imported: true })
+              }
+              addBean({ ...bean, is_favorite: false, imported: true })
+            }
+          }
+          addRecipe({ ...recipe, is_favorite: false, imported: true })
         })
       }
       if (importR) {

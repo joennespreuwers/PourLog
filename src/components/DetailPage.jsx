@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, ChevronLeft } from 'lucide-react'
+import { useSwipeClose } from '../hooks/useSwipeClose'
 
 export default function DetailPage({ open, onClose, title, children, footer, fullscreen = false }) {
   // Keep card mounted until exit animation finishes
@@ -29,6 +30,9 @@ export default function DetailPage({ open, onClose, title, children, footer, ful
     document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  const scrollRef = useRef(null)
+  useSwipeClose(scrollRef, onClose, 'down', open && fullscreen)
 
   if (fullscreen) {
     return (
@@ -63,7 +67,7 @@ export default function DetailPage({ open, onClose, title, children, footer, ful
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
           <div className="mx-auto w-full max-w-2xl px-5 py-6">
             {children}
           </div>

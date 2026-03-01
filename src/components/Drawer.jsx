@@ -1,8 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
+import { useSwipeClose } from '../hooks/useSwipeClose'
 
 export default function Drawer({ open, onClose, title, children, footer }) {
   // Close on Escape — use capture phase so this fires before any bubble-phase listeners (e.g. DetailPage)
+  const panelRef = useRef(null)
+  useSwipeClose(panelRef, onClose, 'right', open)
   useEffect(() => {
     if (!open) return
     const handler = e => {
@@ -38,6 +41,7 @@ export default function Drawer({ open, onClose, title, children, footer }) {
 
       {/* Panel */}
       <div
+        ref={panelRef}
         className="fixed top-0 right-0 h-full z-[71] flex flex-col"
         style={{
           width: 'min(520px, 100vw)',

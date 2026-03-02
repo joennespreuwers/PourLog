@@ -42,6 +42,7 @@ export default function ShareBean() {
   const { id } = useParams()
   const [bean, setBean]         = useState(null)
   const [roastery, setRoastery] = useState(null)
+  const [author, setAuthor]     = useState(null)
   const [status, setStatus]     = useState('loading')
 
   useEffect(() => {
@@ -52,6 +53,10 @@ export default function ShareBean() {
       if (b.roastery_id) {
         const { data: ro } = await supabase.from('roasteries').select('*').eq('id', b.roastery_id).single()
         if (ro) setRoastery(ro)
+      }
+      if (b.created_by) {
+        const { data: profile } = await supabase.from('profiles').select('display_name, slug').eq('id', b.created_by).single()
+        if (profile) setAuthor(profile)
       }
       setStatus('found')
     }
@@ -100,6 +105,15 @@ export default function ShareBean() {
             <h1 className="font-serif text-3xl font-medium leading-tight" style={{ color: 'var(--color-espresso)' }}>{bean.name}</h1>
           </div>
           {roastery && <p className="text-sm" style={{ color: 'var(--color-stone)' }}>{roastery.name}{roastery.country ? ` · ${roastery.country}` : ''}</p>}
+          {author && (
+            <p className="text-xs" style={{ color: 'var(--color-stone)' }}>
+              Added by{' '}
+              {author.slug
+                ? <Link to={`/u/${author.slug}`} style={{ color: 'var(--color-roast)' }}>@{author.slug}</Link>
+                : <span>{author.display_name ?? 'someone'}</span>
+              }
+            </p>
+          )}
         </div>
 
         {/* Flavor notes */}
@@ -124,13 +138,6 @@ export default function ShareBean() {
           <Row label="Price" value={bean.price_per_100g ? `€${Number(bean.price_per_100g).toFixed(2)} / 100g` : null} />
           </div>
         </div>
-
-        {bean.notes && (
-          <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-cream)', border: '1px solid var(--color-border)' }}>
-            <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'var(--color-stone)' }}>Notes</p>
-            <p className="text-sm italic leading-relaxed" style={{ color: 'var(--color-roast)' }}>"{bean.notes}"</p>
-          </div>
-        )}
 
         <div className="flex flex-col gap-3 pt-2">
           <Link

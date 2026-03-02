@@ -50,15 +50,19 @@ export default function ProfilePage() {
         profileData = byId
       }
 
-      const [rRes, bRes, recRes] = await Promise.all([
-        supabase.from('roasteries').select('*').eq('user_id', profileData.id).order('created_at', { ascending: false }),
-        supabase.from('beans').select('*').eq('user_id', profileData.id).order('created_at', { ascending: false }),
+      const [urRes, ubRes, recRes] = await Promise.all([
+        supabase.from('user_roasteries').select('id, notes, is_favorite, created_at, roastery:roastery_id(*)').eq('user_id', profileData.id).order('created_at', { ascending: false }),
+        supabase.from('user_beans').select('id, notes, is_favorite, created_at, bean:bean_id(*)').eq('user_id', profileData.id).order('created_at', { ascending: false }),
         supabase.from('recipes').select('*').eq('user_id', profileData.id).order('created_at', { ascending: false }),
       ])
 
+      // Merge global entity fields with personal collection fields
+      const mergedR = (urRes.data ?? []).map(row => ({ ...row.roastery, notes: row.notes, is_favorite: row.is_favorite, _relation_id: row.id, _collected_at: row.created_at }))
+      const mergedB = (ubRes.data ?? []).map(row => ({ ...row.bean, notes: row.notes, is_favorite: row.is_favorite, _relation_id: row.id, _collected_at: row.created_at }))
+
       setProfile(profileData)
-      setRoasteries(rRes.data ?? [])
-      setBeans(bRes.data ?? [])
+      setRoasteries(mergedR)
+      setBeans(mergedB)
       setRecipes(recRes.data ?? [])
       document.title = `${profileData.display_name ?? 'Profile'} | PourLog`
       setStatus('found')

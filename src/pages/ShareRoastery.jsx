@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 export default function ShareRoastery() {
   const { id } = useParams()
   const [roastery, setRoastery] = useState(null)
+  const [author, setAuthor]     = useState(null)
   const [status, setStatus]     = useState('loading')
 
   useEffect(() => {
@@ -13,6 +14,11 @@ export default function ShareRoastery() {
       if (error || !data) { setStatus('notfound'); return }
       setRoastery(data)
       document.title = `${data.name} | PourLog`
+      // Fetch author profile
+      if (data.created_by) {
+        const { data: profile } = await supabase.from('profiles').select('display_name, slug').eq('id', data.created_by).single()
+        if (profile) setAuthor(profile)
+      }
       setStatus('found')
     }
     load()
@@ -53,6 +59,15 @@ export default function ShareRoastery() {
             {(r.city || r.country) && (
               <p className="text-sm mt-1" style={{ color: 'var(--color-stone)' }}>{[r.city, r.country].filter(Boolean).join(', ')}</p>
             )}
+            {author && (
+              <p className="text-xs mt-2" style={{ color: 'var(--color-stone)' }}>
+                Added by{' '}
+                {author.slug
+                  ? <Link to={`/u/${author.slug}`} style={{ color: 'var(--color-roast)' }}>@{author.slug}</Link>
+                  : <span>{author.display_name ?? 'someone'}</span>
+                }
+              </p>
+            )}
           </div>
         </div>
 
@@ -64,13 +79,6 @@ export default function ShareRoastery() {
           <div className="rounded-xl p-4" style={{ backgroundColor: '#fff', border: '1px solid var(--color-border)' }}>
             <p className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--color-stone)' }}>About</p>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-espresso)' }}>{r.description}</p>
-          </div>
-        )}
-
-        {r.notes && (
-          <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-cream)', border: '1px solid var(--color-border)' }}>
-            <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ color: 'var(--color-stone)' }}>Notes</p>
-            <p className="text-sm italic leading-relaxed" style={{ color: 'var(--color-roast)' }}>"{r.notes}"</p>
           </div>
         )}
 

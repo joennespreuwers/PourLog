@@ -70,11 +70,32 @@ export default function App() {
   }
 
   async function handleImport(data) {
-    const stripImported = arr => arr?.map(({ imported: _i, ...rest }) => rest) ?? []
+    // Strip local-only and personal fields before upserting to global tables
+    const LOCAL_STRIP = ['imported', '_relation_id', '_collected_at', 'notes', 'is_favorite', 'user_id']
+    const cleanGlobal = arr => arr?.map(row => {
+      const cleaned = { ...row }
+      LOCAL_STRIP.forEach(k => delete cleaned[k])
+      return cleaned
+    }) ?? []
     const ups = []
-    if (data.roasteries?.length) ups.push(supabase.from('roasteries').upsert(stripImported(data.roasteries), { onConflict: 'id' }))
-    if (data.beans?.length)      ups.push(supabase.from('beans').upsert(stripImported(data.beans), { onConflict: 'id' }))
-    if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(stripImported(data.recipes), { onConflict: 'id' }))
+    const userId = user?.id
+    if (data.roasteries?.length) {
+      const rows = cleanGlobal(data.roasteries)
+      ups.push(supabase.from('roasteries').upsert(rows, { onConflict: 'id' }).then(() => {
+        if (!userId) return
+        const rels = rows.map(r => ({ user_id: userId, roastery_id: r.id, notes: '', is_favorite: false }))
+        return supabase.from('user_roasteries').upsert(rels, { onConflict: 'user_id,roastery_id', ignoreDuplicates: true })
+      }))
+    }
+    if (data.beans?.length) {
+      const rows = cleanGlobal(data.beans)
+      ups.push(supabase.from('beans').upsert(rows, { onConflict: 'id' }).then(() => {
+        if (!userId) return
+        const rels = rows.map(b => ({ user_id: userId, bean_id: b.id, notes: '', is_favorite: false }))
+        return supabase.from('user_beans').upsert(rels, { onConflict: 'user_id,bean_id', ignoreDuplicates: true })
+      }))
+    }
+    if (data.recipes?.length)    ups.push(supabase.from('recipes').upsert(data.recipes?.map(({ imported: _i, ...r }) => r) ?? [], { onConflict: 'id' }))
     // Filter out legacy 'default-' prefixed IDs from old exports (they're not valid UUIDs)
     const userEq = (data.equipment ?? []).filter(e => !e.id?.startsWith('default-'))
     if (userEq.length)           ups.push(supabase.from('equipment').upsert(userEq, { onConflict: 'id' }))
@@ -156,15 +177,15 @@ function MainApp({
         handleTabChange('Recipes')
         supabase.from('recipes').select('*').eq('id', followR).single().then(async ({ data: recipe }) => {
           if (!recipe) return
-          // Auto-follow the linked bean + its roastery so names show up
+          // Auto-collect the linked bean + its roastery so names show up
           if (recipe.bean_id) {
             const { data: bean } = await supabase.from('beans').select('*').eq('id', recipe.bean_id).single()
             if (bean) {
               if (bean.roastery_id) {
                 const { data: roastery } = await supabase.from('roasteries').select('*').eq('id', bean.roastery_id).single()
-                if (roastery) addRoastery({ ...roastery, is_favorite: false, imported: true })
+                if (roastery) addRoastery({ existing_id: roastery.id, globalData: roastery, notes: '' })
               }
-              addBean({ ...bean, is_favorite: false, imported: true })
+              addBean({ existing_id: bean.id, globalData: bean, notes: '' })
             }
           }
           addRecipe({ ...recipe, is_favorite: false, imported: true })
@@ -173,13 +194,13 @@ function MainApp({
       if (importR) {
         handleTabChange('Roasteries')
         supabase.from('roasteries').select('*').eq('id', importR).single().then(({ data }) => {
-          if (data) addRoastery({ ...data, is_favorite: false, imported: true })
+          if (data) addRoastery({ existing_id: importR, globalData: data, notes: '' })
         })
       }
       if (importB) {
         handleTabChange('Beans')
         supabase.from('beans').select('*').eq('id', importB).single().then(({ data }) => {
-          if (data) addBean({ ...data, is_favorite: false, imported: true })
+          if (data) addBean({ existing_id: importB, globalData: data, notes: '' })
         })
       }
     })
@@ -202,10 +223,10 @@ function MainApp({
         onSignOut={signOut}
       >
         {activeTab === 'Roasteries' && (
-          <Roasteries roasteries={roasteries} onAdd={addRoastery} onUpdate={updateRoastery} onDelete={deleteRoastery} />
+          <Roasteries user={user} roasteries={roasteries} onAdd={addRoastery} onUpdate={updateRoastery} onDelete={deleteRoastery} />
         )}
         {activeTab === 'Beans' && (
-          <Beans beans={beans} roasteries={roasteries} onAdd={addBean} onUpdate={updateBean} onDelete={deleteBean} />
+          <Beans user={user} beans={beans} roasteries={roasteries} onAdd={addBean} onUpdate={updateBean} onDelete={deleteBean} />
         )}
         {activeTab === 'Recipes' && (
           <Recipes recipes={recipes} beans={beans} roasteries={roasteries} equipment={equipment} onAdd={addRecipe} onUpdate={updateRecipe} onDelete={deleteRecipe} copyRecipe={copyRecipe} onCopyConsumed={() => setCopyRecipe(null)} />
